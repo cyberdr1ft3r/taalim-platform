@@ -1,0 +1,10 @@
+---
+description: Canonical Taalim agent entry point
+alwaysApply: true
+---
+
+Read and follow `AGENTS.md` as the canonical development policy.
+
+Before editing, also read `STATUS.md`, `PROJECT_MEMORY.md`, the assigned GitHub issue, relevant `docs/skills/` files, and accepted ADRs.
+
+Do not duplicate or override repository policy in this Cursor rule.
