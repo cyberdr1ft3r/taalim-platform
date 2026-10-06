@@ -264,9 +264,11 @@ Product gap. The exact eligibility timing is [FD-16](founder-decision-log.md). N
 
 ## Localization and language scope
 
-Source-backed architecture direction: Arabic with RTL layout, French, and an English locale path must be possible. Curriculum labels and interface copy are data, not hard-coded feature logic. Dates and times shown to users use Africa/Casablanca.
+Accepted in [FD-01](founder-decision-log.md). Launch copy is Arabic and French. English does not ship in the MVP. English stays architecture-ready and is deferred until demand justifies enabling launch copy.
 
-Source-backed recommendation, still a founder decision: [FD-01](founder-decision-log.md). Launch copy is Arabic and French. English stays in the architecture and is deferred unless interviews show demand. This decision blocks Issue #2 until the founder accepts it.
+The architecture is RTL-ready for Arabic and localization-ready for French and for a later English locale. Curriculum labels and interface copy are data, not hard-coded feature logic. Dates and times shown to users use Africa/Casablanca.
+
+This decision unblocks Issue #2 localization and scaffold work. It does not start Issue #2.
 
 ## Launch inclusions
 
@@ -312,7 +314,7 @@ Steps that depend on a product gap or a source conflict use the option the found
 - Automatic yearly teacher reverification.
 - Advanced configurable role systems and helpdesk automation.
 - SMS and WhatsApp, unless FD-26 includes them.
-- English launch copy, unless the founder rejects FD-01 or later interviews show demand. English stays architecture-ready.
+- English launch copy. Arabic and French are the launch languages. English stays architecture-ready until demand justifies enabling that copy.
 - Platform price floors, minimum class size, minimum payout, and guaranteed income.
 - Kubernetes, microservices, a separate backend stack, a required Redis dependency, and a required GraphQL API. Those are architecture boundaries owned by Issue #2.
 - A production storage vendor choice.
@@ -323,11 +325,12 @@ Steps that depend on a product gap or a source conflict use the option the found
 
 ## Known unresolved decisions
 
-The full statements are in [the founder decision log](founder-decision-log.md). Source-backed rules in that log are not open design choices. They still need founder acceptance of the baseline before they are Accepted.
+FD-01 is Accepted and is not in this list. Launch copy is Arabic and French. English is architecture-ready and deferred. That acceptance unblocks Issue #2 from the product-language side. Issue #2 has not started.
+
+The full statements are in [the founder decision log](founder-decision-log.md). Entries below are for later issues. They are not Accepted. ADR 0001 and ADR 0002 remain Proposed.
 
 | ID | Topic | Classification | Blocks |
 | --- | --- | --- | --- |
-| FD-01 | Launch languages | Source-backed recommendation | #2 |
 | FD-02 | Learner and payer/guardian | Product gap | #3, #5 |
 | FD-03 | Minors and guardian onboarding | Product gap | #5 |
 | FD-04 | Class stop versus new enrolment | Product gap | #7, #11 |
@@ -354,7 +357,7 @@ The full statements are in [the founder decision log](founder-decision-log.md). 
 | FD-25 | Short-month billing anchor | Product gap | #3, #11 |
 | FD-26 | Launch notification channels | Product gap; SMS and WhatsApp not assumed | #15 |
 
-Issue #2 is blocked only by FD-01. The other rows do not block the scaffold, the fake payment adapter, or the provider-neutral storage boundary.
+None of these rows block Issue #2. They block only the later issue in the last column. They do not block the scaffold, the fake payment adapter, or the provider-neutral storage boundary.
 
 ## Paid-pilot readiness criteria
 

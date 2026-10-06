@@ -1,8 +1,8 @@
 # Founder decision log
 
-Issue #1. Status of this log: open for founder review.
+Issue #1. FD-01 is Accepted. The other entries are not Accepted product truth.
 
-Nothing in this file is Accepted product truth. [ADR 0001](../adr/0001-mvp-subscription-and-supply-rules.md) and [ADR 0002](../adr/0002-paid-access-and-private-content.md) are Proposed. Founder approval has not been recorded.
+[ADR 0001](../adr/0001-mvp-subscription-and-supply-rules.md) and [ADR 0002](../adr/0002-paid-access-and-private-content.md) stay Proposed. Accepting FD-01 does not accept those records.
 
 The product source documents are not repository files. This log has been reconciled against externally reviewed findings from:
 
@@ -16,7 +16,8 @@ Those files are still not in the GitHub repository. This log does not claim they
 
 | Classification | Meaning |
 | --- | --- |
-| Source-backed rule | The reviewed sources or the backlog state the rule. It is not an open design choice. It is still not Accepted until the founder accepts the baseline. |
+| Accepted | The founder has approved this entry. FD-01 is the only Accepted entry. |
+| Source-backed rule | The reviewed sources or the backlog state the rule. It is not an open design choice. It is still not Accepted until the founder accepts that rule. |
 | Source-backed recommendation | A source proposes it. Founder approval is still required before engineering treats it as the rule. |
 | Genuine source conflict | The sources disagree. The founder must choose. This log does not choose. |
 | Product gap | The reviewed sources do not answer it. Engineering must not invent a number, age, rate, cap, formula, or timing rule. |
@@ -25,22 +26,16 @@ Those files are still not in the GitHub repository. This log does not claim they
 
 Each entry states the classification, the source position, the options where a real choice remains, the recommendation only when a source supports one, the consequence of each option, and whether engineering is blocked.
 
-Issue #2 is blocked only by FD-01. Other entries block the later issues named on that entry. They do not block the application scaffold, the fake payment adapter, or the provider-neutral storage boundary.
+No entry in this log blocks Issue #2. FD-01 is Accepted, so localization and scaffold work are unblocked from the product-language side. Later entries block only the issues named on each entry. They do not block the application scaffold, the fake payment adapter, or the provider-neutral storage boundary. Issue #2 has not started.
 
 ## FD-01. Launch languages
 
-- Classification: Source-backed recommendation requiring founder approval.
-- Source: The Morocco business plan recommends launch copy in Arabic and French, architecture ready for RTL and French, and English deferred unless interviews show demand. Issue #2 and Issue #8 still require infrastructure that can support Arabic RTL, French, and English, and they leave the launch set to Issue #1.
-- Options:
-  - A. Launch copy in Arabic and French. Keep the architecture ready for Arabic RTL, French, and English. Do not ship English copy unless later interviews show demand.
-  - B. Ship Arabic, French, and English copy at launch.
-  - C. Ship one language only.
-- Recommendation: A. This remains a founder decision until it is explicitly accepted.
-- Consequences:
-  - A. Issue #2 builds RTL-ready localization and French, and leaves an English locale path unused at launch. Launch copy is two languages. English can be added without a new routing design.
-  - B. More launch copy than the business plan recommends. It matches a three-language catalogue on day one.
-  - C. Drops a language the business plan includes in the launch set.
-- Engineering blocked without a decision: Yes for #2. Issue #2's localization acceptance criterion depends on this release decision. No other entry in this log blocks #2.
+- Classification: Accepted.
+- Accepted option: Launch copy is Arabic and French. English stays architecture-ready and is deferred until demand justifies enabling launch copy.
+- Source: The Morocco business plan recommended this launch set. The founder accepted it for Issue #1.
+- What Issue #2 builds from this decision: RTL-ready Arabic, French launch copy, and an English locale path that does not ship English launch copy. Curriculum labels and interface copy stay data, not hard-coded feature logic.
+- Options not accepted: shipping English copy at launch, or shipping only one language.
+- Engineering blocked: No. This decision unblocks Issue #2 localization and scaffold work. It does not start Issue #2.
 
 ## FD-02. Learner and payer/guardian relationship
 
@@ -445,7 +440,7 @@ Issue #2 is blocked only by FD-01. Other entries block the later issues named on
 
 | ID | Classification | Blocks #2 |
 | --- | --- | --- |
-| FD-01 | Source-backed recommendation requiring founder approval | Yes |
+| FD-01 | Accepted. Arabic and French at launch. English architecture-ready and deferred. | No |
 | FD-02 | Product gap | No |
 | FD-03 | Product gap | No |
 | FD-04 | Product gap | No |
@@ -474,15 +469,48 @@ Issue #2 is blocked only by FD-01. Other entries block the later issues named on
 
 ## What blocks Issue #2
 
-Only FD-01. Issue #2's localization work depends on the launch-language decision, and that decision is not yet founder-accepted.
+Nothing in this log. FD-01 is Accepted: Arabic and French launch copy, RTL-ready localization, and English kept in the architecture without launch copy until demand justifies it.
 
-The source-backed architecture direction, once FD-01 is accepted, is Arabic and French launch copy, RTL-ready French and Arabic, and English present in the architecture but not shipped unless interviews show demand.
+ADR 0001 and ADR 0002 remain Proposed. That status is not a scaffold blocker and is not changed by FD-01. Issue #2 must not treat those records as Accepted. The provider-neutral storage and payment boundaries are already in Issue #2 and in `AGENTS.md`.
 
-ADR 0001 and ADR 0002 are Proposed. Their lack of Accepted status is not an extra scaffold blocker. Issue #2 must not treat them as accepted truth. The provider-neutral storage and payment boundaries #2 must build are already in Issue #2 and in `AGENTS.md`.
+Issue #2 can begin after PR #19 is merged and this baseline is on `main`. It has not started.
 
-## Suggested review order
+## Issue #1 disposition
 
-1. FD-01, the only Issue #2 blocker.
-2. FD-10 and FD-11, the source conflicts.
-3. Confirm the source-backed records: FD-09 grace rules, FD-12, FD-13, FD-14, the FD-16 constraints, the FD-19 planning proposal, and the FD-21 gates.
-4. The product gaps, in the order later issues need them: FD-02, FD-03, FD-04, FD-05, FD-06, FD-07, FD-08, FD-15, FD-17, FD-18, FD-20, FD-22, FD-23, FD-24, FD-25, FD-26, plus the FD-09 anchor gap.
+Issue #1 asked for one baseline that preserves the commercial rules and explicitly records anything still unresolved. It does not require every later-feature choice to be finalized.
+
+Accepted now:
+
+- FD-01. Launch languages are Arabic and French. English is architecture-ready and deferred.
+
+Recorded for later issues, not left silent:
+
+- Source-backed rules and constraints for later implementation: FD-09 grace behavior, FD-14 late enrolment, FD-06 ban on invented credits, FD-12 recording direction, FD-16 review constraints, FD-21 payment gates.
+- Still open, and blocking only the later issue named below.
+- Legal and provider gates in FD-21. They block live charges, not this issue and not the Issue #2 fake adapter.
+
+ADR 0001 and ADR 0002 stay Proposed until a separate founder approval. Their Proposed status does not reopen FD-01 and does not keep Issue #1 incomplete.
+
+## Remaining decisions by later issue
+
+| Later issue | Still open there | Gate |
+| --- | --- | --- |
+| #3 | FD-02 account shape, FD-09 recovery anchor, FD-24 rounding, FD-25 short-month anchor | Product gap |
+| #4, #16 | FD-21 seller model, written provider confirmation, legal and accounting review | Legal/provider gate. Live charges stay off. |
+| #5 | FD-02, FD-03 minors, FD-10 student second factor, FD-11 device restriction versus console | Product gap or source conflict. Session revocation and teacher/admin second factor are not waiting on a new choice. |
+| #6 | FD-18 curriculum list, FD-22 document lifetime, FD-23 public sentence | Product gap |
+| #7 | FD-04 who may enrol after stop-renewal, FD-07 schedule changes, FD-12 before any recording is stored, FD-17 previews, FD-18 | Product gap, or approval before storing recordings |
+| #8 | FD-16 review timing, FD-17 previews, FD-19 commission disclosure, FD-23 public sentence | Product gap or unapproved commercial proposal |
+| #10 | FD-15 seat hold, FD-19 commission disclosure | Product gap. Late enrolment itself is the source-backed rule in FD-14. |
+| #11 | FD-04, FD-05 reactivation consent, FD-06 switch flow, FD-08 holidays, FD-09 recovery anchor, FD-25 | Product gap. The three-day grace rules are not an open length choice. |
+| #12 | FD-07, FD-12 and FD-13 before storing a recording, FD-17 | Approval or product gap |
+| #13 | FD-19 rate and model, FD-20 refund entitlement, FD-24 rounding | Unapproved commercial proposal or product gap |
+| #14 | FD-20 refund entitlement | Product gap |
+| #15 | FD-26 launch channel | Product gap. SMS and WhatsApp are not assumed. |
+
+## Suggested review order for later issues
+
+1. FD-10 and FD-11, before #5 builds student authentication or any device restriction.
+2. FD-02 and FD-03, before #3 and #5 model guardians.
+3. The money gaps before checkout copy and settlement: FD-15, FD-19, FD-20, FD-21, FD-24, FD-25, and the FD-09 anchor.
+4. Content and catalogue gaps when those issues start: FD-04, FD-05, FD-06, FD-07, FD-08, FD-12, FD-13, FD-16, FD-17, FD-18, FD-22, FD-23, FD-26.
