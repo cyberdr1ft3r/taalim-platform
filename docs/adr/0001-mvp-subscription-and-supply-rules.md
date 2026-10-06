@@ -1,16 +1,18 @@
 # 0001. MVP subscription and supply rules
 
-- Status: Accepted
+- Status: Proposed
 - Date: 2026-10-06
 - Related issues: #1, #7, #8, #10, #11, #13
 
 ## Context
 
-Issue #1 requires one implementation baseline for the Morocco marketplace. The GitHub backlog already states a set of commercial rules to preserve. Those rules are accepted here so later issues do not reinterpret them.
+Issue #1 requires one implementation baseline for the Morocco marketplace. The GitHub backlog already states a set of commercial rules to preserve. This record proposes those rules for founder acceptance. It is not Accepted. Founder approval has not been recorded.
 
-This record does not approve a payment provider, a legal funds-flow model, a commission percentage, proration, or class-switching credits. Those remain in [the founder decision log](../product/founder-decision-log.md).
+This record does not approve a payment provider, a legal funds-flow model, a commission percentage, proration, or class-switching credits. Those remain in [the founder decision log](../product/founder-decision-log.md). A business-plan commission test rate is a planning assumption in that log, not a rule in this record.
 
-The named product-source documents were not present in the repository at base commit `7e5e124`. The accepted rules below are the rules Issue #1 and the related backlog issues already state. If those source documents are added later and disagree with this record, stop and surface the conflict.
+The product source documents are not repository files. This proposal has been reconciled against externally reviewed source findings. It does not claim those documents are stored in the repository.
+
+The source-backed three-day grace rules are recorded in FD-09. They are not restated here as Accepted, and they are not an open choice of grace length.
 
 ## Decision
 
@@ -20,20 +22,20 @@ The named product-source documents were not present in the repository at base co
 4. A teacher may sell a class only after founder approval for the relevant subject and level. A generic verified badge is not a substitute for that scope.
 5. Billing is a rolling monthly subscription with a per-subscription anchor date. The customer may cancel, and that cancellation takes effect at the end of the period already paid. Access for that paid period continues until the period ends.
 6. When a teacher changes the listed price, subscriptions that are already in force keep the price those subscribers agreed. New subscribers are offered the new listed price. In force means the subscription is active, or it is inside a paid period whose cancellation has been scheduled.
-7. Whether a later, separate subscription keeps an earlier price is not decided here. Failed-payment recovery and class reactivation are [FD-09 and FD-05](../product/founder-decision-log.md).
-8. Figures that exist only as business-plan projections, including forecast revenue, a planning refund percentage, and infrastructure or acquisition cost assumptions, are not product rules and are not automatic ledger entries.
+7. Whether a later, separate subscription keeps an earlier price is not decided here. Class reactivation is [FD-05](../product/founder-decision-log.md). The post-grace anchor is the remaining gap in [FD-09](../product/founder-decision-log.md).
+8. Figures that exist only as business-plan projections, including forecast revenue, a planning refund percentage, a proposed commission test rate, and infrastructure or acquisition cost assumptions, are not product rules and are not automatic ledger entries.
 
 ## Consequences
 
-- Checkout, class publishing, and settlement copy can state teacher-set MAD prices, no minimum class size, cancellation at the end of the paid period, and price protection for in-force subscribers.
-- Issue #3 can store MAD in integer minor units and can store a versioned price on each subscription.
-- Issue #7 can reject a publish attempt by a teacher who is not approved for that subject and level.
-- Issue #11 can implement end-of-period cancellation without a new founder decision.
-- Commission rate, refund entitlement beyond the paid period, grace length, switching credits, and the legal seller model still need the decision log before the issues that implement them treat those topics as decided.
+- After the founder accepts this proposal, checkout and class publishing can state teacher-set MAD prices, no minimum class size, cancellation at the end of the paid period, and price protection for in-force subscribers.
+- Issue #3 can store MAD in integer minor units and can store a versioned price on each subscription. It must not invent a commission rate.
+- Issue #7 can reject a publish attempt by a teacher who is not approved for that subject and level, after this proposal is accepted.
+- Issue #11 can implement end-of-period cancellation from this proposal. It follows the source-backed grace rules in FD-09 rather than choosing a different grace length. It must not invent proration or credits.
 - This record does not select a payment provider and does not authorize live charges.
 
 ## Alternatives considered
 
-- Platform price bands or a minimum class size. Rejected because Issue #1 and Issue #7 say to preserve teacher-selected prices and no minimum enrolment.
-- Immediate cancellation with an automatic partial refund. Rejected because Issue #1 and Issue #11 require ordinary cancellation at the end of the paid period, and no proration rule is accepted.
-- Treating a business-plan commission or refund percentage as the live product rule. Rejected because the backlog states that financial projections are planning assumptions, not product rules.
+- Marking this record Accepted before founder approval. Rejected because approval has not been recorded.
+- Platform price bands or a minimum class size. Not proposed, because Issue #1 and Issue #7 say to preserve teacher-selected prices and no minimum enrolment.
+- Immediate cancellation with an automatic partial refund. Not proposed, because Issue #1 and Issue #11 require ordinary cancellation at the end of the paid period, and no proration rule is stated.
+- Treating a business-plan commission or refund percentage as the live product rule. Not proposed, because those figures are planning assumptions.

@@ -2,7 +2,7 @@
 
 | Risk | Why it matters | Current control/owner |
 | --- | --- | --- |
-| Conflicting product rules | Can corrupt billing/access behavior | Agreed rules are in [accepted ADRs](adr/README.md) and the [MVP scope](product/mvp-scope.md). Open items stay in the [founder decision log](product/founder-decision-log.md) until the founder accepts them. |
+| Conflicting product rules | Can corrupt billing/access behavior | Proposed records are in [the ADR index](adr/README.md) and the [MVP scope](product/mvp-scope.md). They are not Accepted. Open items stay in the [founder decision log](product/founder-decision-log.md). |
 | Agent overlap | Parallel agents can overwrite shared contracts/config | #17 ownership/worktree/shared-surface rules |
 | Storage lock-in or public-file exposure | Private learning/verification data could leak or become hard to migrate | #2 provider-neutral storage boundary; #5 authorization |
 | Payment-provider mismatch | Recurring marketplace funds flow may not be approved/supported | #4 provider/legal validation; fake provider first |

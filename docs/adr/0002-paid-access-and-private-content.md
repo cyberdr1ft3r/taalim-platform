@@ -1,6 +1,6 @@
 # 0002. Paid access and private-content semantics
 
-- Status: Accepted
+- Status: Proposed
 - Date: 2026-10-06
 - Related issues: #1, #2, #3, #5, #6, #10, #12, #16
 
@@ -8,7 +8,11 @@
 
 Classroom resources, learner submissions, teacher verification documents, and any recordings are sensitive. Issue #1 requires privacy, access, and retention semantics without choosing a storage vendor. Issue #2 owns the storage adapter. Feature code must stay behind that adapter.
 
-Several retention durations and the recording-consent flow are still founder decisions. This record accepts only the access rules the backlog already states.
+This record proposes the access rules the backlog already states. It is not Accepted. Founder approval has not been recorded.
+
+Retention durations, recording consent, and which files are public previews remain in [the founder decision log](../product/founder-decision-log.md).
+
+The product source documents are not repository files. This proposal has been reconciled against externally reviewed source findings.
 
 ## Decision
 
@@ -22,21 +26,23 @@ Several retention durations and the recording-consent flow are still founder dec
    - Learner submissions: the submitting learner, the teacher of that class, and an authorized administrator. Other learners do not receive them.
    - Teacher verification documents: authorized founder reviewers only. They are not part of the public teacher profile and are not readable by learners or other teachers.
    - Meeting links: enrolled participants with current access, the class teacher, and authorized administrators. Meeting links are not published in the public catalogue.
-   - Recordings: not public objects. Storing a recording in the product waits on the recording decisions in the founder decision log. Until those decisions are accepted, launch classes are treated as not recorded by Taalim.
-7. Preview material, if later accepted, is a separate explicit publication choice. This decision does not make ordinary classroom files public.
-8. Retention state must be representable on the stored object, including soft-deletion where a category needs it. This decision does not set a retention duration for verification documents or recordings. Those durations remain founder decisions. Authorized deletion of a verification document is audited.
+   - Recordings: not public objects. The paid pilot uses external live links. Recording automation is deferred. An optional recording may be stored only when it was disclosed before purchase and the founder has approved the consent and retention rules. Otherwise the product does not store recordings.
+7. Preview material, if later decided in FD-17, is a separate explicit publication choice. This decision does not make ordinary classroom files public.
+8. Retention state must be representable on the stored object, including soft-deletion where a category needs it. This decision does not set a retention duration for verification documents or recordings. Authorized deletion of a verification document is audited.
 9. Private objects stay private across backup and restore. Recovery must not turn them into public objects.
 
 ## Consequences
 
-- Issue #2 can define a provider-neutral storage service and a local private provider for development without a production vendor choice.
-- Issue #3 can model stored objects separately from classes, submissions, and verification cases.
+- Issue #2 can define a provider-neutral storage service and a local private provider for development without a production vendor choice. That boundary is already required by Issue #2 and does not depend on marking this record Accepted.
+- Issue #3 can model stored objects separately from classes, submissions, and verification cases after this proposal is accepted.
 - Issue #5 and Issue #12 can write authorization tests for cross-account, cross-class, and id/key tampering.
 - Issue #6 can store verification uploads as private objects and keep them out of the public profile.
-- Grace-period access, recording consent, recording retention, and which files count as marketplace previews are not granted by this record.
+- Recording consent, recording retention, and which files count as marketplace previews are not granted by this record.
 
 ## Alternatives considered
 
-- Choosing a production object-storage vendor in the product baseline. Rejected because Issue #1 and Issue #2 keep that choice in deployment configuration.
-- Treating a signed URL or storage key as permission to read. Rejected because Issue #5 requires a server-side relationship check before any private access is issued.
-- Publishing meeting links or verification files on the class catalogue. Rejected because Issue #6 and Issue #12 require those objects to stay private.
+- Marking this record Accepted before founder approval. Rejected because approval has not been recorded.
+- Choosing a production object-storage vendor in the product baseline. Not proposed, because Issue #1 and Issue #2 keep that choice in deployment configuration.
+- Treating a signed URL or storage key as permission to read. Not proposed, because Issue #5 requires a server-side relationship check before any private access is issued.
+- Publishing meeting links or verification files on the class catalogue. Not proposed, because Issue #6 and Issue #12 require those objects to stay private.
+- Stating that the paid pilot stores no recordings at all. Not proposed. The reviewed sources allow external live links, defer recording automation, and allow optional recordings when they are disclosed before purchase and consent and retention are approved.
