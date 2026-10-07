@@ -28,7 +28,7 @@ Taalim is a modular monolith:
 - Zod 4 and React Hook Form
 - A provider-neutral `StorageProvider`. Development uses a private local filesystem provider. Any other storage value refuses to boot because production storage is undecided.
 - A provider-neutral payment adapter. Development and tests use a fake provider. Live charges stay off.
-- PostgreSQL-backed background jobs. Redis is not required.
+- PostgreSQL-backed background jobs. Redis is not required. A claim commits `running`, `locked_at`, `locked_by`, and `attempts` before the handler runs. Finalization updates that row only while the same worker still owns the lease. A committed `running` row older than 15 minutes is recovered: it returns to `pending` while attempts remain, and it becomes `failed` once `max_attempts` is reached. That lease is infrastructure recovery, not a product timeout. Handlers must be idempotent. The only handler in this issue is `foundation.ping`.
 - Vitest, React Testing Library, and Playwright
 - pnpm 10.33.3, Docker Compose for local PostgreSQL, GitHub Actions
 - Pino structured JSON logs with redaction

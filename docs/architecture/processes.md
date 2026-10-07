@@ -14,6 +14,10 @@ The checked-in publishable key decodes to `example.clerk.accounts.dev`. Clerk tr
 
 The only handler is `foundation.ping`. There is no subscription, billing, or notification job.
 
-Claim and completion share one database transaction. The claim statement is `UPDATE ... FROM (SELECT ... FOR UPDATE SKIP LOCKED)`. A second worker skips the locked row, so two workers cannot commit the same job. The handler runs before that transaction commits. A crash rolls the claim back and leaves the row `pending`, so a later pass can run it again. Handlers must tolerate that retry. `foundation.ping` has no external side effect. A thrown handler error is caught inside the transaction: the row returns to `pending` until `maxAttempts`, then becomes `failed`. The stored error text is the fixed string `handler failed`. Attempt counts commit only with that transaction.
+A pass uses three separate steps:
 
-The 15-minute statement returns a committed `running` row to `pending`. It is infrastructure recovery, not a product deadline. This foundation does not commit `running` before the handler finishes, so a killed process is recovered by rollback rather than by that lease.
+1. Claim. One short transaction recovers expired leases, then takes one due `pending` row with `FOR UPDATE SKIP LOCKED`. It commits `status = running`, `locked_at`, `locked_by`, and `attempts` before it returns. The handler does not run inside this transaction.
+2. Execute. The handler runs after that commit. A crash can happen after an external effect and before finalization, and a later worker can run the handler again, so handlers must be idempotent. `foundation.ping` has no external effect.
+3. Finalize. A separate update changes the row only when `id` matches, `status` is still `running`, and `locked_by` is still this worker. Success clears the lease and the error. A retry sets `pending`, clears the lease, and makes `run_at` due immediately. There is no product backoff. A terminal failure sets `failed` and clears the lease. An old worker cannot finalize a job after another worker has reclaimed the lease.
+
+The 15-minute threshold applies to committed `running` rows. It is infrastructure recovery, not a product or business timeout. Recovery clears the lease. If `attempts` is still below `max_attempts`, the row returns to `pending`. If `attempts` is already at the maximum, the row becomes `failed` and is not requeued. A thrown handler uses the same attempt ceiling: the stored error text is `handler failed`. A lease that expires at the ceiling stores `lease expired`.
