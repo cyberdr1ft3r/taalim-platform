@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "title": "Taalim application foundation",
+    "description": "Architecture-ready English catalog. This locale is not enabled for launch."
+  },
+  "home": {
+    "eyebrow": "Technical foundation",
+    "title": "Taalim application foundation",
+    "summary": "This page checks the foundation only. It does not enroll teachers or sell subscriptions.",
+    "switchToArabic": "Arabic",
+    "switchToFrench": "French",
+    "formLabel": "Synthetic note",
+    "formSubmit": "Check the form",
+    "formSuccess": "The synthetic note was accepted",
+    "formError": "Enter a synthetic note"
+  }
+}

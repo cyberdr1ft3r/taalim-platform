@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "title": "Socle applicatif Taalim",
+    "description": "Page locale de fondation pour vérifier l'exécution, la langue et la direction."
+  },
+  "home": {
+    "eyebrow": "Socle technique",
+    "title": "Socle applicatif Taalim",
+    "summary": "Cette page vérifie seulement le socle, sans inscription des enseignants ni abonnements.",
+    "switchToArabic": "Arabe",
+    "switchToFrench": "Français",
+    "formLabel": "Note d'essai",
+    "formSubmit": "Vérifier le formulaire",
+    "formSuccess": "La note d'essai est acceptée",
+    "formError": "Saisissez une note d'essai"
+  }
+}

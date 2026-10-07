@@ -6,7 +6,7 @@ Morocco-focused online education marketplace and learning platform.
 
 All human and AI contributors must read `AGENTS.md` first, then `STATUS.md`, the relevant GitHub issue, and any applicable skill files under `docs/skills/`.
 
-Application implementation does not start until Issue #1 product decisions and Issue #17 harness requirements are sufficiently settled. Issue #2 owns the application architecture and scaffold.
+Issue #2 owns the application architecture and scaffold. Local setup is documented in `docs/architecture/local-development.md`. The accepted baseline is `docs/adr/0003-application-architecture-baseline.md`.
 
 ## Current workflow
 

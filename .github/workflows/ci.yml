@@ -1,0 +1,67 @@
+name: Application CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: taalim
+          POSTGRES_PASSWORD: taalim
+          POSTGRES_DB: taalim_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U taalim -d taalim_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TAALIM_ENV: test
+      DATABASE_URL: postgresql://taalim:taalim@127.0.0.1:5432/taalim_test
+      STORAGE_PROVIDER: local
+      STORAGE_LOCAL_ROOT: .data/test-storage
+      STORAGE_ACCESS_SECRET: test-only-storage-access-secret-32
+      PAYMENT_PROVIDER: fake
+      LOG_LEVEL: silent
+      APP_BASE_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk
+      CLERK_SECRET_KEY: sk_test_local_placeholder_not_a_live_secret
+      TAALIM_RUN_DB_TESTS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Apply migrations
+        run: pnpm db:migrate
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Unit and integration tests
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+      - name: Install Playwright
+        run: pnpm exec playwright install --with-deps chromium
+      - name: End-to-end tests
+        run: pnpm test:e2e
+      - name: Validate agent harness
+        run: node scripts/check-harness.mjs

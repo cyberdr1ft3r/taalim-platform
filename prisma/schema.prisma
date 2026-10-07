@@ -1,0 +1,29 @@
+// Infrastructure schema for Issue #2.
+// Business tables (users, classes, subscriptions, payments, files) belong to later issues.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model BackgroundJob {
+  id          String    @id @default(cuid())
+  type        String
+  payload     Json
+  status      String    @default("pending")
+  runAt       DateTime  @default(now()) @map("run_at")
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5) @map("max_attempts")
+  lockedAt    DateTime? @map("locked_at")
+  lockedBy    String?   @map("locked_by")
+  lastError   String?   @map("last_error")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([status, runAt])
+  @@map("background_jobs")
+}

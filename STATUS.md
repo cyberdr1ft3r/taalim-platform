@@ -2,24 +2,29 @@
 
 ## Current phase
 
-Harness bootstrap / pre-development.
+Application foundation (#2) is in progress. The repository harness from #17 is on `main`. Product-scope documentation (#1) is still an open pull request and is not on this branch.
 
-## Active issues
+## Active work
 
-- #17 — AI development harness and two-developer coordination workflow: in progress on `chore/issue-17-ai-harness`.
-- #1 — MVP scope and business-rule decisions: may proceed in parallel.
+- Issue: #2
+- Owner: Ali (cyberdr1ft3r)
+- Agent/session: `bc-58579c28-a3b7-5926-bd1c-c93b27fa53a7`
+- Branch: `cursor/app-foundation-issue-2-53a7`
+- Base commit: `7e5e1241d2447c5604b401d220f34afd6728af9c`
+- Dependencies: #17 harness is on `main`. Arabic and French are the enabled launch locales for this scaffold. English is catalogued and not routed. Pull request #19 was not merged when this branch was cut.
+- Shared surfaces: `STATUS.md`, `PROJECT_MEMORY.md`, `README.md`, and `docs/adr/README.md` also change on open pull request #19. This branch adds `package.json`, `pnpm-lock.yaml`, GitHub Actions, Docker Compose, and the first Prisma migration.
+- Blockers: production storage, the live payment provider, and legal funds-flow remain undecided. Do not merge automatically.
+- Next action: human review of the #2 pull request.
 
-## Blocked implementation
+## Architecture posture
 
-Application scaffold (#2) should not begin until the minimal #17 harness is reviewed and #1 provides the required product decisions.
+- Modular monolith. The accepted baseline is `docs/adr/0003-application-architecture-baseline.md`.
+- Clerk identifies the session. Taalim server code authorizes.
+- Production storage is undecided. Development uses a private local filesystem provider.
+- The payment provider is undecided. Development and tests use a fake provider. Live charges are off.
+- Background jobs use PostgreSQL. Redis is not required.
+- Enabled locales are Arabic (RTL) and French. The English catalog is present and not routed.
 
-## Current architecture posture
+## Not started here
 
-- Application stack baseline lives in #2 and is not implemented yet.
-- Production storage provider: undecided by design.
-- Payment provider: undecided by design.
-- No application code, schema, migrations, or production infrastructure yet.
-
-## Next action
-
-Complete #17, run `node scripts/check-harness.mjs`, open PR, and obtain founder review.
+Final business schema, subscriptions, teacher onboarding, checkout, real payment integration, production object storage, and production deployment.
