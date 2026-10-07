@@ -2,13 +2,14 @@
 
 Issue #1. This is the product baseline for later engineering issues. It is documentation only. It does not choose a storage vendor, a payment provider, or a legal funds-flow model.
 
-[ADR 0001](../adr/0001-mvp-subscription-and-supply-rules.md) and [ADR 0002](../adr/0002-paid-access-and-private-content.md) are Proposed. They are not Accepted. Founder approval has not been recorded. Do not treat a rule below as accepted product truth until that approval exists.
+[ADR 0001](../adr/0001-mvp-subscription-and-supply-rules.md) and [ADR 0002](../adr/0002-paid-access-and-private-content.md) are Proposed. They are not Accepted. Founder approval of those records has not been recorded. [FD-01](founder-decision-log.md) is the accepted exception: Arabic and French launch copy, with English architecture-ready and deferred. Do not treat any other rule below as accepted product truth.
 
 ## How to read this document
 
 | Status | Meaning |
 | --- | --- |
-| Source-backed rule | Stated by the backlog or by the externally reviewed sources. Not an open design choice. Not Accepted until the founder accepts the baseline. |
+| Accepted | The founder has approved this item. FD-01 is the only Accepted decision. |
+| Source-backed rule | Stated by the backlog or by the externally reviewed sources. Not an open design choice. Not Accepted until the founder accepts that rule. |
 | Source-backed recommendation | A source proposes it. Founder approval is still required. |
 | Source conflict | The sources disagree. The founder must choose. |
 | Product gap | No source answer. Do not invent a number, age, rate, cap, formula, or timing rule. |
