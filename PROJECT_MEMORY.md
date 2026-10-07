@@ -6,9 +6,9 @@ Taalim is a Morocco-focused online education marketplace and learning platform c
 
 ## Current stage
 
-Pre-development. Repository harness work is Issue #17. Product decisions are Issue #1. Application architecture/scaffold is Issue #2. Core schema/state modeling is Issue #3.
+Pre-development. The Issue #17 harness is on `main`. Issue #1's MVP baseline is in final pull-request review. Issue #2 is unblocked on launch languages and has not started. Core schema/state modeling is Issue #3.
 
-## Accepted working principles
+## Working principles
 
 - Keep the early product a modular monolith unless evidence requires otherwise.
 - Identity, application authorization, storage, and payment concerns are separate boundaries.
@@ -16,6 +16,10 @@ Pre-development. Repository harness work is Issue #17. Product decisions are Iss
 - Payment provider is deliberately undecided; development uses fake/sandbox adapters.
 - No native video, AI features, mobile apps, or infrastructure expansion merely because they are possible.
 - Use synthetic development/test data only.
+- Backlog rules already stated for the MVP, and only proposed until founder acceptance: teacher-set MAD prices, no minimum enrolment, verification before selling, rolling monthly billing, cancellation at the end of the paid period, and price protection for in-force subscribers.
+- Paid access follows trusted payment state. Private learning and verification files stay behind application authorization.
+- Storage and payment providers remain undecided. Live charges stay off until written provider confirmation and legal and accounting review.
+- Launch languages are Arabic and French. English remains architecture-ready and is deferred until demand justifies launch copy.
 
 ## Collaboration
 
@@ -27,7 +31,9 @@ Ali/cyberdr1ft3r and Anass work in parallel with independent agents. Issue owner
 - Goals: `docs/GOALS.md`
 - Roadmap: `docs/ROADMAP.md`
 - Risks: `docs/RISKS.md`
-- Accepted architecture/product decisions: `docs/adr/`
+- Proposed product records, not yet Accepted: [docs/adr/](docs/adr/README.md)
+- MVP baseline: [docs/product/mvp-scope.md](docs/product/mvp-scope.md)
+- Open founder decisions: [docs/product/founder-decision-log.md](docs/product/founder-decision-log.md)
 - Canonical agent rules: `AGENTS.md`
 
 Keep this file compact. Do not turn it into a chronological chat log or task-specific handoff.
