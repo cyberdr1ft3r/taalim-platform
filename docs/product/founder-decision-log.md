@@ -26,7 +26,7 @@ Those files are still not in the GitHub repository. This log does not claim they
 
 Each entry states the classification, the source position, the options where a real choice remains, the recommendation only when a source supports one, the consequence of each option, and whether engineering is blocked.
 
-No entry in this log blocks Issue #2. FD-01 is Accepted, so localization and scaffold work are unblocked from the product-language side. Later entries block only the issues named on each entry. They do not block the application scaffold, the fake payment adapter, or the provider-neutral storage boundary. Issue #2 has not started.
+No entry in this log blocks Issue #2. FD-01 is Accepted, so localization and scaffold work are unblocked from the product-language side. Later entries block only the issues named on each entry. They do not block the application scaffold, the fake payment adapter, or the provider-neutral storage boundary. The scaffold is in draft pull request #20 and is not merged.
 
 ## FD-01. Launch languages
 
@@ -473,7 +473,7 @@ Nothing in this log. FD-01 is Accepted: Arabic and French launch copy, RTL-ready
 
 ADR 0001 and ADR 0002 remain Proposed. That status is not a scaffold blocker and is not changed by FD-01. Issue #2 must not treat those records as Accepted. The provider-neutral storage and payment boundaries are already in Issue #2 and in `AGENTS.md`.
 
-Issue #2 can begin after PR #19 is merged and this baseline is on `main`. It has not started.
+PR #19 is merged and this baseline is on `main`. The scaffold is in draft pull request #20 and is not merged.
 
 ## Issue #1 disposition
 

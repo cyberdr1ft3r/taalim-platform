@@ -2,31 +2,31 @@
 
 ## Current phase
 
-Final founder review of the MVP baseline pull request. The repository harness is active on `main`.
+Issue #1 is merged. Issue #2 is implemented on draft pull request #20 and is not merged. The repository harness from #17 is on `main`.
 
-## Active issues
+## Active work
 
-- #17 — AI development harness and two-developer coordination workflow: merged. Harness is active (PR #18).
-- #1 — MVP scope and business-rule decisions: in final PR review on `cursor/mvp-scope-issue-1-53a7` (draft PR #19). FD-01 is Accepted.
+- Issue: #2
+- Owner: Ali (cyberdr1ft3r)
+- Agent/session: `bc-58579c28-a3b7-5926-bd1c-c93b27fa53a7`
+- Branch: `cursor/app-foundation-issue-2-53a7`
+- Integrated main: `a53496679194e1485b46a29298dde2afe1f9b137`
+- Dependencies: #17 and #1 are on `main`. FD-01 is Accepted.
+- Shared surfaces reconciled with merged #19: `STATUS.md`, `PROJECT_MEMORY.md`, `README.md`, and `docs/adr/README.md`.
+- Blockers: production storage, the live payment provider, and legal funds-flow remain undecided. Do not merge automatically.
+- Next action: human review of draft pull request #20.
 
-## Blocked implementation
+## Architecture posture
 
-Issue #2 is unblocked from the product-language perspective. FD-01 accepts Arabic and French as the launch languages. English stays architecture-ready and is deferred until demand justifies launch copy.
+- Modular monolith. [ADR 0003](docs/adr/0003-application-architecture-baseline.md) is Accepted for the application baseline and is not yet merged.
+- [ADR 0001](docs/adr/0001-mvp-subscription-and-supply-rules.md) and [ADR 0002](docs/adr/0002-paid-access-and-private-content.md) remain Proposed.
+- Clerk identifies the session. Taalim server code authorizes.
+- Production storage is undecided. Development uses a private local filesystem provider.
+- The payment provider is undecided. Development and tests use a fake provider. Live charges are off.
+- Background jobs use PostgreSQL. Redis is not required.
+- Launch locales are Arabic (RTL) and French. English is architecture-ready and is not a routed launch locale. Arabic as the unprefixed route is a technical choice, not a founder landing-locale decision.
 
-Issue #2 has not started. It can begin after PR #19 is merged and this baseline is on `main`.
+## Not started
 
-Later issues stay blocked only by their own unresolved founder decisions and by their issue dependencies. See [the founder decision log](docs/product/founder-decision-log.md). Those decisions do not block the scaffold, the fake payment adapter, or the provider-neutral storage boundary.
-
-#17 is no longer a blocker.
-
-## Current architecture posture
-
-- Application stack baseline lives in #2 and is not implemented yet.
-- Production storage provider: undecided by design.
-- Payment provider: undecided by design. No production route is approved. Legal and accounting review is required before the first paid customer. Live charges stay disabled.
-- No application code, schema, migrations, or production infrastructure yet.
-- [ADR 0001](docs/adr/0001-mvp-subscription-and-supply-rules.md) and [ADR 0002](docs/adr/0002-paid-access-and-private-content.md) remain Proposed. FD-01 does not accept them.
-
-## Next action
-
-Human review of draft PR #19. Do not merge it from this session. Do not start Issue #2 before that pull request is merged.
+- Issue #3, including the business schema.
+- Subscriptions, teacher onboarding, checkout, real payment integration, production object storage, and production deployment.

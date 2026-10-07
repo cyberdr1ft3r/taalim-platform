@@ -326,7 +326,7 @@ Steps that depend on a product gap or a source conflict use the option the found
 
 ## Known unresolved decisions
 
-FD-01 is Accepted and is not in this list. Launch copy is Arabic and French. English is architecture-ready and deferred. That acceptance unblocks Issue #2 from the product-language side. Issue #2 has not started.
+FD-01 is Accepted and is not in this list. Launch copy is Arabic and French. English is architecture-ready and deferred. That acceptance unblocks Issue #2 from the product-language side. The scaffold is in draft pull request #20 and is not merged.
 
 The full statements are in [the founder decision log](founder-decision-log.md). Entries below are for later issues. They are not Accepted. ADR 0001 and ADR 0002 remain Proposed.
 
