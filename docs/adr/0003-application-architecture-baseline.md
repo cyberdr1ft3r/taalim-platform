@@ -8,6 +8,8 @@
 
 Taalim needs a local application foundation and CI before business features. Issue #2 owns the stack. Production object storage, the live payment provider, and production hosting are deliberately out of scope.
 
+This record does not accept [ADR 0001](0001-mvp-subscription-and-supply-rules.md) or [ADR 0002](0002-paid-access-and-private-content.md). Those stay Proposed. FD-01 is the accepted language decision: Arabic and French launch copy, with English architecture-ready and not routed.
+
 Official package metadata on 2026-10-07 shows `prisma@latest` as `8.0.0-rc.20`. That release is a release candidate, so this decision stays on Prisma ORM 7.10.0. `create-next-app@16.4.0` installs TypeScript 5.9 and ESLint 9. TypeScript 7.0.2 and ESLint 10.12.0 were not adopted. Next.js 16 renames `middleware.ts` to `proxy.ts`; Clerk and `next-intl` are composed in `src/proxy.ts`.
 
 No concrete blocker was found against the requested baseline.

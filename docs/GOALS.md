@@ -7,4 +7,4 @@
 5. Keep infrastructure proportional to the pilot and avoid vendor lock-in where it would make future changes expensive.
 6. Enable Ali and Anass to develop safely in parallel with independent coding agents.
 
-Detailed product decisions belong to Issue #1 and accepted ADRs.
+MVP baseline, still in founder review: [MVP scope](product/mvp-scope.md). Proposed records: [ADRs](adr/README.md). Founder choices: [founder decision log](product/founder-decision-log.md).

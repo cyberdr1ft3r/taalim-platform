@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Application foundation (#2) is in progress. The repository harness from #17 is on `main`. Product-scope documentation (#1) is still an open pull request and is not on this branch.
+Issue #1 is merged. Issue #2 is implemented on draft pull request #20 and is not merged. The repository harness from #17 is on `main`.
 
 ## Active work
 
@@ -10,21 +10,23 @@ Application foundation (#2) is in progress. The repository harness from #17 is o
 - Owner: Ali (cyberdr1ft3r)
 - Agent/session: `bc-58579c28-a3b7-5926-bd1c-c93b27fa53a7`
 - Branch: `cursor/app-foundation-issue-2-53a7`
-- Base commit: `7e5e1241d2447c5604b401d220f34afd6728af9c`
-- Dependencies: #17 harness is on `main`. Arabic and French are the enabled launch locales for this scaffold. English is catalogued and not routed. Pull request #19 was not merged when this branch was cut.
-- Shared surfaces: `STATUS.md`, `PROJECT_MEMORY.md`, `README.md`, and `docs/adr/README.md` also change on open pull request #19. This branch adds `package.json`, `pnpm-lock.yaml`, GitHub Actions, Docker Compose, and the first Prisma migration.
+- Integrated main: `a53496679194e1485b46a29298dde2afe1f9b137`
+- Dependencies: #17 and #1 are on `main`. FD-01 is Accepted.
+- Shared surfaces reconciled with merged #19: `STATUS.md`, `PROJECT_MEMORY.md`, `README.md`, and `docs/adr/README.md`.
 - Blockers: production storage, the live payment provider, and legal funds-flow remain undecided. Do not merge automatically.
-- Next action: human review of the #2 pull request.
+- Next action: human review of draft pull request #20.
 
 ## Architecture posture
 
-- Modular monolith. The accepted baseline is `docs/adr/0003-application-architecture-baseline.md`.
+- Modular monolith. [ADR 0003](docs/adr/0003-application-architecture-baseline.md) is Accepted for the application baseline and is not yet merged.
+- [ADR 0001](docs/adr/0001-mvp-subscription-and-supply-rules.md) and [ADR 0002](docs/adr/0002-paid-access-and-private-content.md) remain Proposed.
 - Clerk identifies the session. Taalim server code authorizes.
 - Production storage is undecided. Development uses a private local filesystem provider.
 - The payment provider is undecided. Development and tests use a fake provider. Live charges are off.
 - Background jobs use PostgreSQL. Redis is not required.
-- Enabled locales are Arabic (RTL) and French. The English catalog is present and not routed.
+- Launch locales are Arabic (RTL) and French. English is architecture-ready and is not a routed launch locale. Arabic as the unprefixed route is a technical choice, not a founder landing-locale decision.
 
-## Not started here
+## Not started
 
-Final business schema, subscriptions, teacher onboarding, checkout, real payment integration, production object storage, and production deployment.
+- Issue #3, including the business schema.
+- Subscriptions, teacher onboarding, checkout, real payment integration, production object storage, and production deployment.

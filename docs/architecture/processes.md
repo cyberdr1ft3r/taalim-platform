@@ -12,6 +12,8 @@ The checked-in publishable key decodes to `example.clerk.accounts.dev`. Clerk tr
 
 `pnpm worker` loads the same environment schema, then runs one PostgreSQL job pass and exits. It logs the worker id and environment name. It does not log the database URL or the caught error text, because a driver error can contain a connection string.
 
-The only handler is `foundation.ping`. Claim uses `FOR UPDATE SKIP LOCKED`. A running lock older than 15 minutes returns to `pending`. That lease is infrastructure recovery, not a product deadline. A failed handler is retried until `maxAttempts`, then marked `failed`. The stored error text is the fixed string `handler failed`.
+The only handler is `foundation.ping`. There is no subscription, billing, or notification job.
 
-Business jobs, schedules, and email or SMS delivery are later issues.
+Claim and completion share one database transaction. The claim statement is `UPDATE ... FROM (SELECT ... FOR UPDATE SKIP LOCKED)`. A second worker skips the locked row, so two workers cannot commit the same job. The handler runs before that transaction commits. A crash rolls the claim back and leaves the row `pending`, so a later pass can run it again. Handlers must tolerate that retry. `foundation.ping` has no external side effect. A thrown handler error is caught inside the transaction: the row returns to `pending` until `maxAttempts`, then becomes `failed`. The stored error text is the fixed string `handler failed`. Attempt counts commit only with that transaction.
+
+The 15-minute statement returns a committed `running` row to `pending`. It is infrastructure recovery, not a product deadline. This foundation does not commit `running` before the handler finishes, so a killed process is recovered by rollback rather than by that lease.

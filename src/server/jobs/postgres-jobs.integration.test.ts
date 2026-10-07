@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { getPrismaClient } from "../db/client";
 import { jobHandlers } from "./handlers";
 import { processDueJobs } from "./process-due-jobs";
@@ -7,6 +7,11 @@ const enabled = process.env.TAALIM_RUN_DB_TESTS === "1";
 
 describe.skipIf(!enabled)("postgres background jobs", () => {
   const prisma = enabled ? getPrismaClient() : null;
+
+  beforeEach(async () => {
+    if (!prisma) return;
+    await prisma.backgroundJob.deleteMany({ where: { status: "pending" } });
+  });
 
   afterAll(async () => {
     if (!prisma) return;
@@ -35,6 +40,27 @@ describe.skipIf(!enabled)("postgres background jobs", () => {
     const second = await processDueJobs(prisma, { workerId: "worker-integration", limit: 5 });
     const again = await prisma.backgroundJob.findUniqueOrThrow({ where: { id: created.id } });
     expect(again.status).toBe("succeeded");
-    expect(second).toBeGreaterThanOrEqual(0);
+    expect(again.attempts).toBe(1);
+    expect(second).toBe(0);
+  });
+
+  it("does not let two workers commit the same job", async () => {
+    if (!prisma) return;
+    const created = await prisma.backgroundJob.create({
+      data: {
+        type: "foundation.ping",
+        payload: { nonce: "synthetic-concurrent" },
+        status: "pending",
+        runAt: new Date(Date.now() - 1000),
+      },
+    });
+    const [first, second] = await Promise.all([
+      processDueJobs(prisma, { workerId: "worker-a", limit: 1, handlers: jobHandlers }),
+      processDueJobs(prisma, { workerId: "worker-b", limit: 1, handlers: jobHandlers }),
+    ]);
+    const stored = await prisma.backgroundJob.findUniqueOrThrow({ where: { id: created.id } });
+    expect(stored.status).toBe("succeeded");
+    expect(stored.attempts).toBe(1);
+    expect(first + second).toBe(1);
   });
 });
