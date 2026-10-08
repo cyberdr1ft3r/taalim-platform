@@ -12,9 +12,7 @@ Current `main` base for Issue #3 implementation: `43fbfd93fd35254adac3dc1f7fe575
 
 - Issue: #3 — core entities, money records, subscription states, and provider-neutral stored-object metadata.
 - Implementation PR: #26 on `feat/issue-3-core-data-model`.
-- Current reviewed head: `2e1def9a3b2c570f4a4be1be2a94701c6d5fae27`.
 - Founder decisions used: FD-02, FD-24, FD-25 Accepted; FD-09 post-failure recovery anchor remains deferred to #11.
-- GitHub Actions on the current head: Harness checks PASS; Application CI PASS.
 - Next action: human review of PR #26. Do not merge automatically.
 
 ## Architecture posture
