@@ -39,18 +39,15 @@ No entry in this log blocks Issue #2. FD-01 is Accepted, so localization and sca
 
 ## FD-02. Learner and payer/guardian relationship
 
-- Classification: Product gap.
-- Source: Issue #3 requires guardian-payer relationships. Issue #5 requires an explicit approved link and forbids access merely because an email or surname matches. Issue #10 shows payer and learner at checkout. Issue #15 counts them separately. The externally reviewed findings supplied for this reconciliation do not say whether one person may be both learner and payer.
-- Options:
-  - A. The learner account and the payer account are always two different people.
-  - B. One account may be both learner and payer when that person is the contracting party. A separate guardian link is required when another person pays, or when the learner is not allowed to contract.
-  - C. One household login covers payment and learning, with no separate learner identity.
-- Recommendation: none. The earlier preference for option B was not source-backed and is withdrawn.
+- Classification: Accepted.
+- Accepted option: One account may be both learner and payer when that person is the contracting party. A separate explicit guardian/payer relationship is used when another person pays or acts for the learner.
+- Source context: Issue #3 requires guardian-payer relationships. Issue #5 requires an explicit approved link and forbids access merely because an email or surname matches. Issue #10 shows payer and learner at checkout. Issue #15 counts them separately.
 - Consequences:
-  - A. Adult students need a second account. A child account is always distinct from the payer.
-  - B. Adults can subscribe for themselves. A child still needs an explicit linked guardian. Metrics can still separate learners and payers.
-  - C. Unique-learner and unique-payer counts collapse. Attendance and entitlement become ambiguous inside the household.
-- Engineering blocked without a decision: No for #2. Yes for #3 and #5.
+  - Adults can subscribe for themselves without creating a second account.
+  - A learner and a payer can still be different people and must then be connected through an explicit application relationship.
+  - Unique learner and unique payer metrics remain distinguishable even when the same account fulfills both roles.
+  - This decision does not set a legal age threshold or minor-contracting rule; FD-03 remains open.
+- Engineering blocked: No for #3 account shape. #5 still depends on FD-03 for minors.
 
 ## FD-03. Minors and guardian onboarding
 
@@ -156,7 +153,7 @@ No entry in this log blocks Issue #2. FD-01 is Accepted, so localization and sca
   - A. A successful retry during the three days continues the same subscription and the same anchor.
   - B. The founder defines a different post-failure anchor before #11 implements recovery.
 - Recommendation for the grace rules: keep the four source-backed rules above. Do not replace them with a different grace length.
-- Recommendation for the anchor gap: none.
+- Founder disposition for the anchor gap: deferred to Issue #11. Issue #3 must store neutral timing fields and must not encode a post-recovery anchor algorithm.
 - Consequences:
   - Keeping the four rules gives #11 a concrete access clock, keeps failed attempts out of earnings, and makes cancellation win over a later retry.
   - Leaving the anchor undefined means #11 must not guess when the next period starts after a successful retry or after grace ends.
@@ -395,32 +392,27 @@ No entry in this log blocks Issue #2. FD-01 is Accepted, so localization and sca
 
 ## FD-24. Commission rounding
 
-- Classification: Product gap.
-- Source: Issue #3 requires documented rounding for MAD minor units. No reviewed finding says who receives a remainder centime. Do not invent that assignment.
-- Options:
-  - A. The remainder centime goes to the platform.
-  - B. The remainder centime goes to the teacher.
-  - C. The founder specifies another documented rounding rule, with worked examples.
-- Recommendation: none.
+- Classification: Accepted.
+- Accepted rule: Compute the platform commission from the agreed percentage in integer minor units using deterministic half-up rounding to the nearest centime. Compute teacher payable as `gross_minor - platform_commission_minor`.
+- Required invariant: `gross_minor = platform_commission_minor + teacher_payable_minor`.
 - Consequences:
-  - Any accepted option must keep teacher payable plus commission equal to gross tuition in minor units.
-  - #3 and #13 cannot split a percentage until the founder chooses.
-- Engineering blocked without a decision: No for #2. Yes for #3 money splits and for #13.
+  - The rounding operation occurs once on the platform commission amount.
+  - Any fractional remainder created by the percentage calculation is resolved by that deterministic rounding; teacher payable is always the exact balancing amount.
+  - Worked examples must accompany the financial implementation and tests.
+  - This decision defines rounding only. It does not accept any commission rate; FD-19 remains open.
+- Engineering blocked: No for #3 rounding. #13 still depends on FD-19 for the commission model/rate.
 
 ## FD-25. Short-month billing anchor
 
-- Classification: Product gap.
-- Source: Billing is rolling monthly. Issue #3 requires short months and Africa/Casablanca timezone changes to be specified. UTC storage and Africa/Casablanca display are backlog requirements. No reviewed finding chooses the short-month day rule. Do not treat "last day of the short month" as accepted.
-- Options:
-  - A. The anchor keeps its original day. In a month that lacks that day, renewal falls on the last day of that month, then returns to the original day when it exists.
-  - B. A missing anchor day moves the renewal to the first of the next month and changes the anchor permanently.
-  - C. Every subscription renews on calendar month-end.
-- Recommendation: none. Option C would replace rolling monthly anchors.
+- Classification: Accepted.
+- Accepted rule: Preserve the subscription's original billing day. If a month does not contain that day, renew on the final calendar day of that month, then return to the original billing day in the next month that contains it.
+- Example: a 31st-day anchor renews on 28/29 February and returns to the 31st in March.
 - Consequences:
-  - A. A 31st-day subscriber has a shorter period in February and returns to the 31st later. Statements must show the actual dates.
-  - B. The purchased day drifts.
-  - C. Bunches renewals on one calendar day.
-- Engineering blocked without a decision: No for #2. Yes for #3 and #11.
+  - Persist the original anchor separately from each actual period boundary.
+  - Statements and entitlement periods use the actual calculated dates.
+  - UTC remains the storage standard; Africa/Casablanca remains the scheduling/display timezone.
+  - This decision does not settle the post-failed-payment recovery anchor in FD-09.
+- Engineering blocked: No for #3 and the ordinary monthly-anchor model.
 
 ## FD-26. Launch notification channels
 
@@ -441,7 +433,7 @@ No entry in this log blocks Issue #2. FD-01 is Accepted, so localization and sca
 | ID | Classification | Blocks #2 |
 | --- | --- | --- |
 | FD-01 | Accepted. Arabic and French at launch. English architecture-ready and deferred. | No |
-| FD-02 | Product gap | No |
+| FD-02 | Accepted. One account may be both learner and payer; explicit relationship when different people are involved. | No |
 | FD-03 | Product gap | No |
 | FD-04 | Product gap | No |
 | FD-05 | Product gap | No |
@@ -463,8 +455,8 @@ No entry in this log blocks Issue #2. FD-01 is Accepted, so localization and sca
 | FD-21 | Source-backed payment gates; seller model unresolved | No |
 | FD-22 | Product gap | No |
 | FD-23 | Product gap for the public sentence; explanation and no learning guarantee are source-backed constraints | No |
-| FD-24 | Product gap | No |
-| FD-25 | Product gap | No |
+| FD-24 | Accepted. Half-up rounding of platform commission; teacher payable is the balancing amount. | No |
+| FD-25 | Accepted. Preserve original day; clamp to month-end when absent and return later. | No |
 | FD-26 | Product gap; SMS and WhatsApp are not assumed | No |
 
 ## What blocks Issue #2
@@ -495,7 +487,7 @@ ADR 0001 and ADR 0002 stay Proposed until a separate founder approval. Their Pro
 
 | Later issue | Still open there | Gate |
 | --- | --- | --- |
-| #3 | FD-02 account shape, FD-09 recovery anchor, FD-24 rounding, FD-25 short-month anchor | Product gap |
+| #3 | No remaining founder decision blocks the neutral schema. FD-09 recovery anchor is explicitly deferred to #11. | Ready for schema design/implementation after review |
 | #4, #16 | FD-21 seller model, written provider confirmation, legal and accounting review | Legal/provider gate. Live charges stay off. |
 | #5 | FD-02, FD-03 minors, FD-10 student second factor, FD-11 device restriction versus console | Product gap or source conflict. Session revocation and teacher/admin second factor are not waiting on a new choice. |
 | #6 | FD-18 curriculum list, FD-22 document lifetime, FD-23 public sentence | Product gap |
@@ -511,6 +503,6 @@ ADR 0001 and ADR 0002 stay Proposed until a separate founder approval. Their Pro
 ## Suggested review order for later issues
 
 1. FD-10 and FD-11, before #5 builds student authentication or any device restriction.
-2. FD-02 and FD-03, before #3 and #5 model guardians.
-3. The money gaps before checkout copy and settlement: FD-15, FD-19, FD-20, FD-21, FD-24, FD-25, and the FD-09 anchor.
+2. FD-03 before #5 implements minor onboarding. FD-02 is now Accepted for the account relationship shape.
+3. Remaining money gaps before checkout copy and settlement: FD-15, FD-19, FD-20, FD-21, and the FD-09 recovery anchor. FD-24 and FD-25 are now Accepted.
 4. Content and catalogue gaps when those issues start: FD-04, FD-05, FD-06, FD-07, FD-08, FD-12, FD-13, FD-16, FD-17, FD-18, FD-22, FD-23, FD-26.
