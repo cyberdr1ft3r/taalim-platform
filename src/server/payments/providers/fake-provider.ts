@@ -24,6 +24,10 @@ interface StoredPayment extends ProviderPayment {
   createdAt: Date;
 }
 
+interface StoredRefund extends ProviderRefund {
+  createdAt: Date;
+}
+
 export class FakePaymentProvider implements PaymentProvider {
   readonly provider = "fake";
   readonly capabilities: PaymentProviderCapabilities = {
@@ -38,7 +42,7 @@ export class FakePaymentProvider implements PaymentProvider {
 
   private readonly payments = new Map<string, StoredPayment>();
   private readonly mandates = new Map<string, ProviderMandate>();
-  private readonly refunds = new Map<string, ProviderRefund>();
+  private readonly refunds = new Map<string, StoredRefund>();
   private readonly idempotentPayments = new Map<string, string>();
   private readonly paymentFingerprints = new Map<string, string>();
   private readonly idempotentRefunds = new Map<string, string>();
@@ -145,7 +149,7 @@ export class FakePaymentProvider implements PaymentProvider {
       this.idempotentRefunds,
       this.refundFingerprints,
     );
-    if (replay) return { ...this.refunds.get(replay)! };
+    if (replay) return this.publicRefund(this.refunds.get(replay)!);
 
     const alreadyRefunding = [...this.refunds.values()]
       .filter((refund) => refund.providerPaymentReference === input.providerPaymentReference)
@@ -158,7 +162,7 @@ export class FakePaymentProvider implements PaymentProvider {
     }
 
     const providerRefundReference = this.nextReference("ref");
-    const refund: ProviderRefund = {
+    const refund: StoredRefund = {
       provider: this.provider,
       providerRefundReference,
       refundRecordId: input.refundRecordId,
@@ -166,11 +170,12 @@ export class FakePaymentProvider implements PaymentProvider {
       status: "processing",
       amountMinor: input.amountMinor,
       currency: input.currency,
+      createdAt: new Date(),
     };
     this.refunds.set(providerRefundReference, refund);
     this.idempotentRefunds.set(input.idempotencyKey, providerRefundReference);
     this.refundFingerprints.set(input.idempotencyKey, fingerprint);
-    return { ...refund };
+    return this.publicRefund(refund);
   }
 
   async verifyAndParseWebhook(request: ProviderWebhookRequest): Promise<NormalizedPaymentEvent[]> {
@@ -185,6 +190,21 @@ export class FakePaymentProvider implements PaymentProvider {
 
     const payload = JSON.parse(request.rawBody) as FakeEventPayload | FakeEventPayload[];
     const events = Array.isArray(payload) ? payload : [payload];
+
+    for (const event of events) {
+      if (event.type === "mandate.activated" && event.mandateReference) {
+        this.mandates.set(event.mandateReference, {
+          provider: this.provider,
+          mandateReference: event.mandateReference,
+          status: "active",
+        });
+      }
+      if (event.type === "mandate.revoked" && event.mandateReference) {
+        const mandate = this.mandates.get(event.mandateReference);
+        if (mandate) this.mandates.set(event.mandateReference, { ...mandate, status: "revoked" });
+      }
+    }
+
     return events.map((event) => ({
       ...event,
       provider: this.provider,
@@ -199,11 +219,7 @@ export class FakePaymentProvider implements PaymentProvider {
     if (!Number.isInteger(offset) || offset < 0 || query.from > query.to) {
       throw new Error("Invalid reconciliation query");
     }
-    const candidates = [...this.payments.values()].filter(
-      (payment) => payment.createdAt >= query.from && payment.createdAt <= query.to,
-    );
-    const page = candidates.slice(offset, offset + limit);
-    const entries = page.map((payment) => ({
+    const paymentEntries = [...this.payments.values()].map((payment) => ({
       provider: this.provider,
       providerTransactionReference: payment.providerPaymentReference,
       providerPaymentReference: payment.providerPaymentReference,
@@ -213,6 +229,25 @@ export class FakePaymentProvider implements PaymentProvider {
       currency: payment.currency,
       occurredAt: payment.createdAt,
     }));
+    const refundEntries = [...this.refunds.values()].map((refund) => ({
+      provider: this.provider,
+      providerTransactionReference: refund.providerRefundReference,
+      providerPaymentReference: refund.providerPaymentReference,
+      kind: "refund" as const,
+      status: refund.status,
+      grossAmountMinor: refund.amountMinor,
+      currency: refund.currency,
+      occurredAt: refund.createdAt,
+    }));
+    const candidates = [...paymentEntries, ...refundEntries]
+      .filter((entry) => entry.occurredAt >= query.from && entry.occurredAt <= query.to)
+      .sort(
+        (left, right) =>
+          left.occurredAt.getTime() - right.occurredAt.getTime() ||
+          left.providerTransactionReference.localeCompare(right.providerTransactionReference),
+      );
+    const page = candidates.slice(offset, offset + limit);
+    const entries = page;
     const nextOffset = offset + page.length;
     return nextOffset < candidates.length ? { entries, nextCursor: String(nextOffset) } : { entries };
   }
@@ -284,6 +319,12 @@ export class FakePaymentProvider implements PaymentProvider {
 
   private publicPayment(payment: StoredPayment): ProviderPayment {
     const result: ProviderPayment & { createdAt?: Date } = { ...payment };
+    delete result.createdAt;
+    return { ...result };
+  }
+
+  private publicRefund(refund: StoredRefund): ProviderRefund {
+    const result: ProviderRefund & { createdAt?: Date } = { ...refund };
     delete result.createdAt;
     return { ...result };
   }
