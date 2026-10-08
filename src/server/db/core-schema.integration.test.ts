@@ -256,6 +256,43 @@ describe.skipIf(!enabled)("core business schema", () => {
     ).rejects.toThrow();
   });
 
+  it("records stored-object replacement lineage without rewriting durable identity", async () => {
+    if (!prisma) return;
+    const fixture = await createFixture();
+    const original = await prisma.storedObject.create({
+      data: {
+        provider: "local",
+        storageKey: "so_original_0123456789abcdef",
+        originalFilename: "lesson-v1.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: BigInt(100),
+        createdByUserId: fixture.learner.id,
+      },
+    });
+    const replacement = await prisma.storedObject.create({
+      data: {
+        provider: "local",
+        storageKey: "so_replacement_0123456789abcd",
+        originalFilename: "lesson-v2.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: BigInt(120),
+        createdByUserId: fixture.learner.id,
+        replacesObjectId: original.id,
+      },
+    });
+    await prisma.storedObject.update({
+      where: { id: original.id },
+      data: { status: "SUPERSEDED" },
+    });
+
+    const stored = await prisma.storedObject.findUniqueOrThrow({
+      where: { id: replacement.id },
+      include: { replaces: true },
+    });
+    expect(stored.replaces?.id).toBe(original.id);
+    expect(stored.replaces?.status).toBe("SUPERSEDED");
+  });
+
   it("rejects an unbalanced financial split", async () => {
     if (!prisma) return;
     const fixture = await createFixture();
