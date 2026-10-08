@@ -1,6 +1,6 @@
 # Founder decision log
 
-Issue #1. FD-01 is Accepted. The other entries are not Accepted product truth.
+Issue #1 established the original decision log. Accepted entries currently include FD-01, FD-02, FD-24, and FD-25. All other entries retain the classification stated in their own section.
 
 [ADR 0001](../adr/0001-mvp-subscription-and-supply-rules.md) and [ADR 0002](../adr/0002-paid-access-and-private-content.md) stay Proposed. Accepting FD-01 does not accept those records.
 
@@ -26,7 +26,7 @@ Those files are still not in the GitHub repository. This log does not claim they
 
 Each entry states the classification, the source position, the options where a real choice remains, the recommendation only when a source supports one, the consequence of each option, and whether engineering is blocked.
 
-No entry in this log blocks Issue #2. FD-01 is Accepted, so localization and scaffold work are unblocked from the product-language side. Later entries block only the issues named on each entry. They do not block the application scaffold, the fake payment adapter, or the provider-neutral storage boundary. The scaffold is in draft pull request #20 and is not merged.
+Issue #2 is merged and ADR 0003 is the canonical application architecture baseline. Later entries block only the issues named on each entry; they do not retroactively block the merged scaffold, fake payment adapter, or provider-neutral storage boundary.
 
 ## FD-01. Launch languages
 
@@ -459,21 +459,20 @@ No entry in this log blocks Issue #2. FD-01 is Accepted, so localization and sca
 | FD-25 | Accepted. Preserve original day; clamp to month-end when absent and return later. | No |
 | FD-26 | Product gap; SMS and WhatsApp are not assumed | No |
 
-## What blocks Issue #2
+## Issue #2 disposition
 
-Nothing in this log. FD-01 is Accepted: Arabic and French launch copy, RTL-ready localization, and English kept in the architecture without launch copy until demand justifies it.
-
-ADR 0001 and ADR 0002 remain Proposed. That status is not a scaffold blocker and is not changed by FD-01. Issue #2 must not treat those records as Accepted. The provider-neutral storage and payment boundaries are already in Issue #2 and in `AGENTS.md`.
-
-PR #19 is merged and this baseline is on `main`. The scaffold is in draft pull request #20 and is not merged.
+Issue #2 is merged. ADR 0003 is Accepted and canonical for the application architecture. ADR 0001 and ADR 0002 remain Proposed. The accepted FD-02, FD-24, and FD-25 decisions are later product decisions and do not alter the Issue #2 architecture boundary.
 
 ## Issue #1 disposition
 
 Issue #1 asked for one baseline that preserves the commercial rules and explicitly records anything still unresolved. It does not require every later-feature choice to be finalized.
 
-Accepted now:
+Accepted decisions currently recorded:
 
 - FD-01. Launch languages are Arabic and French. English is architecture-ready and deferred.
+- FD-02. One account may be both learner and payer; when they are different people, the relationship is explicit.
+- FD-24. Platform commission uses deterministic half-up rounding to minor units; teacher payable balances the gross amount.
+- FD-25. Monthly billing preserves the original billing day, clamps to month-end when absent, then returns to the original day.
 
 Recorded for later issues, not left silent:
 
@@ -489,14 +488,14 @@ ADR 0001 and ADR 0002 stay Proposed until a separate founder approval. Their Pro
 | --- | --- | --- |
 | #3 | No remaining founder decision blocks the neutral schema. FD-09 recovery anchor is explicitly deferred to #11. | Ready for schema design/implementation after review |
 | #4, #16 | FD-21 seller model, written provider confirmation, legal and accounting review | Legal/provider gate. Live charges stay off. |
-| #5 | FD-02, FD-03 minors, FD-10 student second factor, FD-11 device restriction versus console | Product gap or source conflict. Session revocation and teacher/admin second factor are not waiting on a new choice. |
+| #5 | FD-03 minors, FD-10 student second factor, FD-11 device restriction versus console | Product gap or source conflict. FD-02 is accepted. Session revocation and teacher/admin second factor are not waiting on a new choice. |
 | #6 | FD-18 curriculum list, FD-22 document lifetime, FD-23 public sentence | Product gap |
 | #7 | FD-04 who may enrol after stop-renewal, FD-07 schedule changes, FD-12 before any recording is stored, FD-17 previews, FD-18 | Product gap, or approval before storing recordings |
 | #8 | FD-16 review timing, FD-17 previews, FD-19 commission disclosure, FD-23 public sentence | Product gap or unapproved commercial proposal |
 | #10 | FD-15 seat hold, FD-19 commission disclosure | Product gap. Late enrolment itself is the source-backed rule in FD-14. |
-| #11 | FD-04, FD-05 reactivation consent, FD-06 switch flow, FD-08 holidays, FD-09 recovery anchor, FD-25 | Product gap. The three-day grace rules are not an open length choice. |
+| #11 | FD-04, FD-05 reactivation consent, FD-06 switch flow, FD-08 holidays, FD-09 recovery anchor | Product gap. FD-25 is accepted for ordinary month anchors; the three-day grace rules are not an open length choice. |
 | #12 | FD-07, FD-12 and FD-13 before storing a recording, FD-17 | Approval or product gap |
-| #13 | FD-19 rate and model, FD-20 refund entitlement, FD-24 rounding | Unapproved commercial proposal or product gap |
+| #13 | FD-19 rate and model, FD-20 refund entitlement | Unapproved commercial proposal or product gap. FD-24 rounding is accepted. |
 | #14 | FD-20 refund entitlement | Product gap |
 | #15 | FD-26 launch channel | Product gap. SMS and WhatsApp are not assumed. |
 
