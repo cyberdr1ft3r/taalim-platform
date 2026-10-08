@@ -97,7 +97,19 @@ Application timestamps are persisted as instants. User-facing scheduling is inte
 
 `StoredObject` is provider-neutral. Durable identity is the internal row plus `provider + storageKey`, not a public URL or an absolute filesystem path.
 
-Metadata includes filename, MIME type, size, optional checksum, creator, lifecycle/retention state, and timestamps. Feature-specific records reference `StoredObject`.
+Metadata includes filename, MIME type, size, optional checksum, creator, lifecycle/retention state, replacement lineage, and timestamps. Feature-specific records reference `StoredObject`.
+
+Replacement/versioning uses a one-to-one `replacesObjectId` chain. A new object is inserted first, then the previous object may be marked `SUPERSEDED`; its metadata is not rewritten to point at the new provider key.
+
+Lifecycle and cleanup rules:
+
+- `ACTIVE`: metadata and provider object are expected to exist.
+- `QUARANTINED`: bytes exist but are not available to ordinary feature access.
+- `MISSING`: metadata exists but a durability/reconciliation check could not find the provider object. The metadata row is retained for diagnosis rather than silently deleted.
+- `SUPERSEDED`: a replacement object exists; historical references remain auditable.
+- `DELETED`: logical deletion has been approved. `deletedAt` records the logical deletion time; physical deletion is executed through the storage boundary.
+- `retentionUntil` is nullable because category-specific retention periods remain later product/legal decisions.
+- Feature references use restrictive foreign keys where historical evidence must not disappear. Orphan cleanup is therefore explicit: first reconcile references and lifecycle state, then delete provider bytes, and only remove metadata when no retained business/audit record requires it.
 
 The storage provider remains a deployment decision behind the Issue #2 `StorageProvider` boundary.
 
@@ -122,6 +134,21 @@ Some PostgreSQL rules are intentionally expressed in migration SQL because Prism
 - non-negative stored-object sizes and money values.
 
 These constraints are part of the schema contract and must be preserved when future migrations are authored.
+
+## State-machine contract
+
+The database stores state vocabulary; application services own allowed transitions and must apply them transactionally.
+
+| Machine | Allowed foundation transitions | Deferred/guarded behavior |
+| --- | --- | --- |
+| Class | `DRAFT -> PUBLISHED -> CLOSED_TO_RENEWAL -> ENDED` | direct end/reactivation must honor later class obligations and FD-04/FD-05 |
+| Payment attempt | `CREATED -> PENDING -> SUCCEEDED`; `PENDING -> FAILED/CANCELLED`; retry may return `FAILED -> PENDING` idempotently | provider-specific retry policy belongs to #9/#11 |
+| Subscription | `PENDING -> ACTIVE`; `ACTIVE -> GRACE`; `ACTIVE -> CANCEL_SCHEDULED -> ENDED`; `GRACE -> ACTIVE/ENDED` | the post-recovery billing anchor remains deferred to #11 |
+| Entitlement | `PENDING -> ACTIVE -> EXPIRED`; `ACTIVE -> REVOKED` only through an authorized admin/security path | entitlement creation must follow trusted payment evidence |
+| Refund | `REQUESTED -> APPROVED -> PROCESSING -> SUCCEEDED`; rejection from `REQUESTED`; failure from `PROCESSING` | refund entitlement/formula remains FD-20 |
+| Payout | `PENDING -> HELD/APPROVED`; `HELD -> APPROVED`; `APPROVED -> PROCESSING -> PAID`; `PROCESSING -> FAILED` | real provider settlement waits on #4/#13 and legal/provider gates |
+
+A row being technically updatable to an enum value does not authorize that transition.
 
 ## State vocabularies
 
@@ -158,5 +185,6 @@ The Issue #3 implementation must prove:
 - provider payment-event deduplication;
 - one entitlement per trusted source payment event;
 - stored-object provider/key uniqueness;
+- stored-object replacement lineage and lifecycle representation;
 - financial split check enforcement;
 - existing production/staging test-database refusal remains intact.
