@@ -135,6 +135,7 @@ model UserAccount {
   createdObjects      StoredObject[]                  @relation("StoredObjectCreator")
   payerSubscriptions  Subscription[]                 @relation("SubscriptionPayer")
   learnerSubscriptions Subscription[]                @relation("SubscriptionLearner")
+  enrollments         Enrollment[]                    @relation("EnrollmentLearner")
 
   @@map("user_accounts")
 }
@@ -290,6 +291,7 @@ model ClassOffering {
   currentPriceVersion   ClassPriceVersion?  @relation("CurrentClassPrice", fields: [currentPriceVersionId], references: [id], onDelete: SetNull)
   sessions              ClassSession[]
   subscriptions         Subscription[]
+  enrollments           Enrollment[]
 
   @@index([lifecycleState, subjectId, educationLevelId])
   @@map("class_offerings")
@@ -398,6 +400,8 @@ model Enrollment {
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
   subscription   Subscription    @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  learner        UserAccount      @relation("EnrollmentLearner", fields: [learnerUserId], references: [id], onDelete: Restrict)
+  class          ClassOffering    @relation(fields: [classId], references: [id], onDelete: Restrict)
   entitlements   Entitlement[]
 
   @@index([learnerUserId, classId, state])
