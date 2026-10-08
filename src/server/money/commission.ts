@@ -19,7 +19,7 @@ export function splitCommissionHalfUp(grossMinor: number, basisPoints: number): 
   }
 
   const numerator = BigInt(grossMinor) * BigInt(basisPoints);
-  const platformCommissionMinor = Number((numerator + 5_000n) / 10_000n);
+  const platformCommissionMinor = Number((numerator + BigInt(5_000)) / BigInt(10_000));
   const teacherPayableMinor = grossMinor - platformCommissionMinor;
 
   return { grossMinor, platformCommissionMinor, teacherPayableMinor };
