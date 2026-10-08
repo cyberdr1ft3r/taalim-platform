@@ -8,8 +8,9 @@ Read, in order:
 1. `STATUS.md`
 2. `PROJECT_MEMORY.md`
 3. The assigned GitHub issue and its dependencies
-4. Relevant files under `docs/skills/`
-5. Accepted ADRs under `docs/adr/`
+4. `docs/IMPLEMENTATION_GUARDRAILS.md` for issue-specific preflight and special handling
+5. Relevant files under `docs/skills/`
+6. Accepted ADRs under `docs/adr/`
 
 If these sources disagree, stop and surface the conflict. Do not silently reconcile contradictory requirements.
 
