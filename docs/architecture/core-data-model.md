@@ -52,12 +52,18 @@ Authentication identity stays external to the business model: `UserAccount.clerk
 
 These concepts stay separate:
 
-- `ClassPriceVersion` stores immutable price history.
+- `ClassPriceVersion` stores immutable price history. PostgreSQL enforces that a referenced version cannot have its class, amount, currency, or effective dates changed.
 - `Subscription` stores the payer, learner, class, agreed price snapshot, billing anchor, and recurring state.
 - `Enrollment` is the learner/class participation record created from a subscription.
 - `Entitlement` is time-bounded access and can point at the trusted payment event that created it.
 
 The migration adds a PostgreSQL partial unique index so a learner/class cannot have two simultaneous open subscriptions in `PENDING`, `ACTIVE`, `GRACE`, or `CANCEL_SCHEDULED` states. Ended history does not block a later subscription.
+
+Cross-entity consistency is also enforced in PostgreSQL:
+
+- a class can only point at a current price version owned by that same class;
+- a subscription can only reference a price version owned by its subscribed class;
+- an enrollment's subscription, learner, and class must match the linked subscription exactly.
 
 ## Money
 
@@ -140,6 +146,7 @@ Browser redirects are not payment evidence.
 Some PostgreSQL rules are intentionally expressed in migration SQL because Prisma cannot fully describe them:
 
 - partial unique index for one open learner/class subscription;
+- composite foreign keys tying price versions to their owning class and enrollments to the exact subscription learner/class;
 - money and date-range `CHECK` constraints;
 - guardian and learner in an explicit relationship must be different users;
 - commission-basis-point bounds;
