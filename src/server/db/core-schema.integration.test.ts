@@ -105,6 +105,87 @@ describe.skipIf(!enabled)("core business schema", () => {
     });
   }
 
+  it("rejects a price version owned by another class", async () => {
+    if (!prisma) return;
+    const fixture = await createFixture();
+    const otherClass = await prisma.classOffering.create({
+      data: {
+        teacherProfileId: (await prisma.teacherProfile.findFirstOrThrow()).id,
+        subjectId: (await prisma.subject.findFirstOrThrow()).id,
+        educationLevelId: (await prisma.educationLevel.findFirstOrThrow()).id,
+        capacity: 5,
+      },
+    });
+    const otherPrice = await prisma.classPriceVersion.create({
+      data: {
+        classId: otherClass.id,
+        amountMinor: 30000,
+        currency: "MAD",
+        effectiveFrom: new Date("2026-10-02T00:00:00.000Z"),
+      },
+    });
+
+    await expect(
+      prisma.subscription.create({
+        data: {
+          payerUserId: fixture.payer.id,
+          learnerUserId: fixture.learner.id,
+          classId: fixture.classOffering.id,
+          priceVersionId: otherPrice.id,
+          state: "PENDING",
+          agreedAmountMinor: 25000,
+          currency: "MAD",
+          originalBillingDay: 15,
+        },
+      }),
+    ).rejects.toThrow();
+
+    await expect(
+      prisma.classOffering.update({
+        where: { id: fixture.classOffering.id },
+        data: { currentPriceVersionId: otherPrice.id },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("rejects enrollment identity that disagrees with its subscription", async () => {
+    if (!prisma) return;
+    const fixture = await createFixture();
+    const subscription = await createSubscription(fixture, { state: "ACTIVE" });
+    const otherLearner = await prisma.userAccount.create({
+      data: { clerkSubject: "synthetic_other_learner" },
+    });
+
+    await expect(
+      prisma.enrollment.create({
+        data: {
+          subscriptionId: subscription.id,
+          learnerUserId: otherLearner.id,
+          classId: fixture.classOffering.id,
+          state: "ACTIVE",
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("makes referenced price versions immutable for commercial fields", async () => {
+    if (!prisma) return;
+    const fixture = await createFixture();
+    await createSubscription(fixture, { state: "ACTIVE" });
+
+    await expect(
+      prisma.classPriceVersion.update({
+        where: { id: fixture.price.id },
+        data: { amountMinor: 26000 },
+      }),
+    ).rejects.toThrow();
+
+    const stored = await prisma.classPriceVersion.findUniqueOrThrow({
+      where: { id: fixture.price.id },
+    });
+    expect(stored.amountMinor).toBe(25000);
+  });
+
   it("allows one account to be both payer and learner", async () => {
     if (!prisma) return;
     const fixture = await createFixture();
