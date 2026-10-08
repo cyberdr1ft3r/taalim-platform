@@ -9,6 +9,8 @@ const required = [
   '.cursor/rules/taalim.mdc',
   'PROJECT_MEMORY.md',
   'STATUS.md',
+  'docs/CONTEXT_MAP.md',
+  'docs/IMPLEMENTATION_GUARDRAILS.md',
   'docs/GOALS.md',
   'docs/ROADMAP.md',
   'docs/RISKS.md',
@@ -27,6 +29,7 @@ const required = [
 ];
 
 const errors = [];
+const warnings = [];
 for (const file of required) {
   if (!fs.existsSync(path.join(root, file))) errors.push(`Missing required file: ${file}`);
 }
@@ -48,9 +51,7 @@ walk(root);
 const conflictPatterns = [/^<<<<<<< /m, /^=======\s*$/m, /^>>>>>>> /m];
 for (const file of files) {
   const text = fs.readFileSync(file, 'utf8');
-  if (conflictPatterns.every((p) => p.test(text))) {
-    errors.push(`Conflict markers found: ${path.relative(root, file)}`);
-  }
+  if (conflictPatterns.every((p) => p.test(text))) errors.push(`Conflict markers found: ${path.relative(root, file)}`);
 }
 
 for (const thin of ['CLAUDE.md', '.cursor/rules/taalim.mdc']) {
@@ -59,6 +60,18 @@ for (const thin of ['CLAUDE.md', '.cursor/rules/taalim.mdc']) {
   const text = fs.readFileSync(full, 'utf8');
   if (!text.includes('AGENTS.md')) errors.push(`${thin} must reference AGENTS.md`);
   if (text.split(/\r?\n/).length > 40) errors.push(`${thin} is not a thin entry point (>40 lines)`);
+}
+
+const budgets = [
+  ['AGENTS.md', 150],
+  ['PROJECT_MEMORY.md', 120],
+  ['STATUS.md', 80],
+];
+for (const [file, limit] of budgets) {
+  const full = path.join(root, file);
+  if (!fs.existsSync(full)) continue;
+  const lines = fs.readFileSync(full, 'utf8').split(/\r?\n/).length;
+  if (lines > limit) warnings.push(`${file} is ${lines} lines; target <= ${limit}`);
 }
 
 const mdLink = /\[[^\]]*\]\(([^)]+)\)/g;
@@ -73,6 +86,8 @@ for (const file of files.filter((f) => ['.md', '.mdc'].includes(path.extname(f))
     if (!fs.existsSync(resolved)) errors.push(`Broken local link in ${path.relative(root, file)}: ${target}`);
   }
 }
+
+if (warnings.length) console.warn('Harness warnings:\n' + warnings.map((w) => `- ${w}`).join('\n'));
 
 if (errors.length) {
   console.error('Harness validation failed:\n' + errors.map((e) => `- ${e}`).join('\n'));

@@ -1,32 +1,29 @@
 # STATUS.md
 
+> Snapshot: 2026-10-08. GitHub is authoritative for live issue/PR/review/merge state.
+
 ## Current phase
 
-Issue #1 is merged. Issue #2 is implemented on draft pull request #20 and is not merged. The repository harness from #17 is on `main`.
+The product baseline (#1), AI harness (#17), and application architecture/foundation (#2) are merged on `main`.
 
-## Active work
+Current `main` foundation commit: `3473e7e625244e50b8c82ac40db45bfe5f669131`.
 
-- Issue: #2
-- Owner: Ali (cyberdr1ft3r)
-- Agent/session: `bc-58579c28-a3b7-5926-bd1c-c93b27fa53a7`
-- Branch: `cursor/app-foundation-issue-2-53a7`
-- Integrated main: `a53496679194e1485b46a29298dde2afe1f9b137`
-- Dependencies: #17 and #1 are on `main`. FD-01 is Accepted.
-- Shared surfaces reconciled with merged #19: `STATUS.md`, `PROJECT_MEMORY.md`, `README.md`, and `docs/adr/README.md`.
-- Blockers: production storage, the live payment provider, and legal funds-flow remain undecided. Do not merge automatically.
-- Next action: human review of draft pull request #20.
+## Current coordination work
+
+- #21 — reconcile backlog with architecture and implementation guardrails.
+- The guardrails/context-loading cleanup is documentation/harness work only.
+- #3 business schema work has not started.
 
 ## Architecture posture
 
-- Modular monolith. [ADR 0003](docs/adr/0003-application-architecture-baseline.md) is Accepted for the application baseline and is not yet merged.
-- [ADR 0001](docs/adr/0001-mvp-subscription-and-supply-rules.md) and [ADR 0002](docs/adr/0002-paid-access-and-private-content.md) remain Proposed.
-- Clerk identifies the session. Taalim server code authorizes.
-- Production storage is undecided. Development uses a private local filesystem provider.
-- The payment provider is undecided. Development and tests use a fake provider. Live charges are off.
-- Background jobs use PostgreSQL. Redis is not required.
-- Launch locales are Arabic (RTL) and French. English is architecture-ready and is not a routed launch locale. Arabic as the unprefixed route is a technical choice, not a founder landing-locale decision.
+- ADR 0003 is Accepted and canonical for the application stack.
+- ADR 0001 and ADR 0002 remain Proposed.
+- Clerk establishes identity; Taalim server code authorizes.
+- Production storage is deliberately undecided; development uses the private local provider.
+- Production payment provider/legal funds flow remain undecided; fake payments only for development/tests.
+- Background jobs use committed PostgreSQL leases with idempotent handlers.
+- Launch locales are Arabic (RTL) and French. English remains architecture-ready but not launch-enabled.
 
-## Not started
+## Next gate
 
-- Issue #3, including the business schema.
-- Subscriptions, teacher onboarding, checkout, real payment integration, production object storage, and production deployment.
+Complete and review the harness/guardrails cleanup, then run the mandatory design preflight for Issue #3 before any business migration is written.
