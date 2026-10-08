@@ -4,16 +4,16 @@
 
 ## Current phase
 
-The product baseline (#1), AI harness (#17), application architecture/foundation (#2), harness cleanup (#21), and Issue #3 design preflight are merged on `main`.
+The product baseline (#1), AI harness (#17), application architecture/foundation (#2), harness cleanup (#21), and Issue #3 core data model are merged on `main`.
 
-Current `main` base for Issue #3 implementation: `43fbfd93fd35254adac3dc1f7fe5758aef47709e`.
+Current `main` base for Issue #4 implementation: `d71e0d399a513f3239afe07bf15eebaf5f2e2a89`.
 
 ## Active work
 
-- Issue: #3 — core entities, money records, subscription states, and provider-neutral stored-object metadata.
-- Implementation PR: #26 on `feat/issue-3-core-data-model`.
-- Founder decisions used: FD-02, FD-24, FD-25 Accepted; FD-09 post-failure recovery anchor remains deferred to #11.
-- Next action: human review of PR #26. Do not merge automatically.
+- Issue: #4 — Morocco payment-provider capability preflight and provider-neutral payment contract.
+- Branch: `feat/issue-4-payment-provider-preflight`.
+- Founder decisions still open: FD-19 commission, FD-20 refund policy, and FD-21 provider/funds-flow responsibility.
+- Next action: human review of the draft PR and direct provider/legal/accounting diligence. Do not merge automatically.
 
 ## Architecture posture
 
@@ -27,4 +27,4 @@ Current `main` base for Issue #3 implementation: `43fbfd93fd35254adac3dc1f7fe575
 
 ## Next gate
 
-After PR #26 is reviewed and merged, Issue #3 can close and downstream schema consumers (#5/#6/#7/#9/#10/#11/#12/#13) may build on the merged contracts subject to their own founder-decision gates.
+The provider-neutral contract is ready for review. A sandbox adapter is not ready until credentials and written marketplace test approval are available; live payments remain blocked by provider, legal/accounting, security, operational, and FD-19/20/21 gates.
