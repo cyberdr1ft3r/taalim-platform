@@ -239,7 +239,7 @@ describe.skipIf(!enabled)("core business schema", () => {
         storageKey: "so_0123456789abcdef0123456789abcdef",
         originalFilename: "synthetic.pdf",
         mimeType: "application/pdf",
-        sizeBytes: 1234n,
+        sizeBytes: BigInt(1234),
         createdByUserId: fixture.learner.id,
       },
     });
@@ -250,7 +250,7 @@ describe.skipIf(!enabled)("core business schema", () => {
           storageKey: "so_0123456789abcdef0123456789abcdef",
           originalFilename: "other.pdf",
           mimeType: "application/pdf",
-          sizeBytes: 99n,
+          sizeBytes: BigInt(99),
         },
       }),
     ).rejects.toThrow();
