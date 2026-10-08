@@ -34,9 +34,17 @@ describe("FakePaymentProvider", () => {
     ).rejects.toThrow(/idempotency key.*different input/i);
   });
 
-  it("supports an off-session mandate charge and makes revocation idempotent", async () => {
-    const payments = new FakePaymentProvider();
-    const mandate = payments.activateMandate("mandate_1");
+  it("supports an off-session mandate charge after a verified mandate activation event", async () => {
+    const payments = new FakePaymentProvider("test-secret");
+    const mandateReference = "mandate_1";
+    const activation = payments.signWebhook({
+      providerEventId: "mandate_event_1",
+      type: "mandate.activated",
+      occurredAt: "2026-10-08T10:00:00.000Z",
+      mandateReference,
+    });
+    await payments.verifyAndParseWebhook(activation);
+    const mandate = { mandateReference };
     const charge = {
       paymentAttemptId: "attempt_2",
       mandateReference: mandate.mandateReference,
@@ -138,13 +146,16 @@ describe("FakePaymentProvider", () => {
     ).rejects.toThrow(/invalid.*signature/i);
   });
 
-  it("pages reconciliation entries and rejects unknown payment references", async () => {
+  it("reconciles both payments and refunds and rejects unknown payment references", async () => {
     const payments = new FakePaymentProvider();
     const first = await payments.createCheckout(checkoutInput);
-    await payments.createCheckout({
-      ...checkoutInput,
-      paymentAttemptId: "attempt_2",
-      idempotencyKey: "checkout:attempt_2",
+    payments.setPaymentStatus(first.providerPaymentReference, "succeeded");
+    const refund = await payments.refundPayment({
+      refundRecordId: "refund_reconcile_1",
+      providerPaymentReference: first.providerPaymentReference,
+      amountMinor: 5000,
+      currency: "MAD",
+      idempotencyKey: "refund:reconcile:1",
     });
 
     const from = new Date(Date.now() - 1000);
@@ -161,10 +172,19 @@ describe("FakePaymentProvider", () => {
     expect(pageOne.nextCursor).toBe("1");
     expect(pageTwo.entries).toHaveLength(1);
     expect(pageTwo.nextCursor).toBeUndefined();
-    expect(pageOne.entries[0]).toMatchObject({
-      kind: "payment",
-      providerPaymentReference: first.providerPaymentReference,
-    });
+    expect([...pageOne.entries, ...pageTwo.entries]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "payment",
+          providerPaymentReference: first.providerPaymentReference,
+        }),
+        expect.objectContaining({
+          kind: "refund",
+          providerTransactionReference: refund.providerRefundReference,
+          providerPaymentReference: first.providerPaymentReference,
+        }),
+      ]),
+    );
     await expect(payments.getPayment("fake_missing")).rejects.toThrow(/not found/i);
   });
 });
