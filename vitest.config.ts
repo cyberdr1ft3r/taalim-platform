@@ -13,5 +13,8 @@ export default defineConfig({
     environment: "node",
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    // Integration suites share one test database and clean the same business
+    // tables in beforeEach; parallel files would delete each other's fixtures.
+    fileParallelism: false,
   },
 });
