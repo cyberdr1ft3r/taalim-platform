@@ -91,7 +91,7 @@ Ordinary monthly calculation preserves the original day, clamps to the final day
 
 The FD-09 post-failure recovery anchor is not implemented here and remains owned by Issue #11.
 
-Application timestamps are persisted as instants. User-facing scheduling is interpreted/displayed in `Africa/Casablanca`; `ClassSession.timezone` records that scheduling context.
+Application timestamps are persisted as instants. User-facing scheduling is interpreted/displayed in `Africa/Casablanca`; `ClassSession.timezone` records that scheduling context. Future schedule-to-UTC conversion must use the IANA zone rules for `Africa/Casablanca`, never a hard-coded UTC offset, so offset changes do not move the intended local class time.
 
 ## Stored objects
 
@@ -112,6 +112,18 @@ Lifecycle and cleanup rules:
 - Feature references use restrictive foreign keys where historical evidence must not disappear. Orphan cleanup is therefore explicit: first reconcile references and lifecycle state, then delete provider bytes, and only remove metadata when no retained business/audit record requires it.
 
 The storage provider remains a deployment decision behind the Issue #2 `StorageProvider` boundary.
+
+## Transaction boundaries
+
+The schema defines the records and database guards; later feature services own the business transactions. These boundaries are required when those services are implemented:
+
+- checkout/activation: normalize the trusted payment event, create the financial event, move the subscription state, create enrollment when required, and mint the entitlement in one database transaction or an equivalent idempotent transaction sequence;
+- renewal: period advancement and the new entitlement must be coupled to the unique trusted payment event so retries cannot extend access twice;
+- cancellation wins over stale retry work through state/version checks in the #11 job/service layer;
+- refunds and payouts append their own records and must not rewrite the original collection event;
+- stored-object metadata creation/replacement is separate from provider byte I/O, with reconciliation state used when one side succeeds and the other does not.
+
+Database uniqueness/check constraints are the final concurrency backstop; they do not replace application transaction design.
 
 ## Payment-event idempotency
 
