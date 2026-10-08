@@ -311,6 +311,7 @@ model ClassPriceVersion {
   currentFor    ClassOffering? @relation("CurrentClassPrice")
   subscriptions Subscription[]
 
+  @@unique([id, classId])
   @@index([classId, effectiveFrom])
   @@map("class_price_versions")
 }
@@ -391,6 +392,7 @@ model Subscription {
   paymentAttempts      PaymentAttempt[]
   financialEvents      FinancialEvent[]
 
+  @@unique([id, learnerUserId, classId])
   @@index([payerUserId, classId, state])
   @@index([learnerUserId, classId, state])
   @@map("subscriptions")
