@@ -1,6 +1,3 @@
-// Infrastructure schema for Issue #2.
-// Business tables (users, classes, subscriptions, payments, files) belong to later issues.
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -8,6 +5,105 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum UserRole {
+  LEARNER
+  PAYER
+  TEACHER
+  ADMIN
+}
+
+enum RelationshipType {
+  GUARDIAN
+  PAYER
+  GUARDIAN_AND_PAYER
+}
+
+enum RelationshipStatus {
+  PENDING
+  ACTIVE
+  REVOKED
+}
+
+enum VerificationCaseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum ApprovalScopeStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum ClassLifecycleState {
+  DRAFT
+  PUBLISHED
+  CLOSED_TO_RENEWAL
+  ENDED
+}
+
+enum SessionStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+}
+
+enum StoredObjectStatus {
+  ACTIVE
+  QUARANTINED
+  MISSING
+  SUPERSEDED
+  DELETED
+}
+
+enum SubscriptionState {
+  PENDING
+  ACTIVE
+  GRACE
+  CANCEL_SCHEDULED
+  ENDED
+}
+
+enum EnrollmentState {
+  PENDING
+  ACTIVE
+  ENDED
+}
+
+enum EntitlementState {
+  PENDING
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+enum PaymentAttemptState {
+  CREATED
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum RefundState {
+  REQUESTED
+  APPROVED
+  REJECTED
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
+enum PayoutState {
+  PENDING
+  HELD
+  APPROVED
+  PROCESSING
+  PAID
+  FAILED
 }
 
 model BackgroundJob {
@@ -26,4 +122,403 @@ model BackgroundJob {
 
   @@index([status, runAt])
   @@map("background_jobs")
+}
+
+model UserAccount {
+  id                  String                         @id @default(cuid())
+  clerkSubject        String                         @unique @map("clerk_subject")
+  createdAt           DateTime                       @default(now()) @map("created_at")
+  updatedAt           DateTime                       @updatedAt @map("updated_at")
+  roles               RoleAssignment[]
+  learnerLinks        GuardianLearnerRelationship[]  @relation("LearnerRelationship")
+  guardianPayerLinks  GuardianLearnerRelationship[]  @relation("GuardianPayerRelationship")
+  teacherProfile      TeacherProfile?
+  reviewedCases       TeacherVerificationCase[]      @relation("VerificationReviewer")
+  createdObjects      StoredObject[]                  @relation("StoredObjectCreator")
+  payerSubscriptions  Subscription[]                 @relation("SubscriptionPayer")
+  learnerSubscriptions Subscription[]                @relation("SubscriptionLearner")
+  enrollments         Enrollment[]                    @relation("EnrollmentLearner")
+
+  @@map("user_accounts")
+}
+
+model RoleAssignment {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  role      UserRole
+  createdAt DateTime @default(now()) @map("created_at")
+  user      UserAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@map("role_assignments")
+}
+
+model GuardianLearnerRelationship {
+  id                   String             @id @default(cuid())
+  guardianPayerUserId  String             @map("guardian_payer_user_id")
+  learnerUserId        String             @map("learner_user_id")
+  relationshipType     RelationshipType   @map("relationship_type")
+  status               RelationshipStatus @default(PENDING)
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  guardianPayer        UserAccount        @relation("GuardianPayerRelationship", fields: [guardianPayerUserId], references: [id], onDelete: Cascade)
+  learner              UserAccount        @relation("LearnerRelationship", fields: [learnerUserId], references: [id], onDelete: Cascade)
+
+  @@unique([guardianPayerUserId, learnerUserId, relationshipType])
+  @@index([learnerUserId, status])
+  @@map("guardian_learner_relationships")
+}
+
+model TeacherProfile {
+  id                 String                    @id @default(cuid())
+  userId             String                    @unique @map("user_id")
+  createdAt          DateTime                  @default(now()) @map("created_at")
+  updatedAt          DateTime                  @updatedAt @map("updated_at")
+  user               UserAccount               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verificationCases  TeacherVerificationCase[]
+  approvalScopes     TeacherApprovalScope[]
+  classes            ClassOffering[]
+
+  @@map("teacher_profiles")
+}
+
+model TeacherVerificationCase {
+  id               String                 @id @default(cuid())
+  teacherProfileId String                 @map("teacher_profile_id")
+  status           VerificationCaseStatus @default(PENDING)
+  reviewedByUserId String?                @map("reviewed_by_user_id")
+  reviewedAt       DateTime?              @map("reviewed_at")
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+  teacherProfile   TeacherProfile         @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  reviewedBy       UserAccount?           @relation("VerificationReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  documents        VerificationDocument[]
+
+  @@index([teacherProfileId, status])
+  @@map("teacher_verification_cases")
+}
+
+model VerificationDocument {
+  id                 String                  @id @default(cuid())
+  verificationCaseId String                  @map("verification_case_id")
+  storedObjectId     String                  @map("stored_object_id")
+  createdAt          DateTime                @default(now()) @map("created_at")
+  verificationCase   TeacherVerificationCase @relation(fields: [verificationCaseId], references: [id], onDelete: Cascade)
+  storedObject       StoredObject            @relation(fields: [storedObjectId], references: [id], onDelete: Restrict)
+
+  @@unique([verificationCaseId, storedObjectId])
+  @@map("verification_documents")
+}
+
+model Curriculum {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  levels    EducationLevel[]
+
+  @@map("curricula")
+}
+
+model EducationLevel {
+  id           String               @id @default(cuid())
+  curriculumId String               @map("curriculum_id")
+  code         String
+  name         String
+  createdAt    DateTime             @default(now()) @map("created_at")
+  curriculum   Curriculum           @relation(fields: [curriculumId], references: [id], onDelete: Restrict)
+  subjectLinks SubjectLevel[]
+  approvalScopes TeacherApprovalScope[]
+  classes      ClassOffering[]
+
+  @@unique([curriculumId, code])
+  @@map("education_levels")
+}
+
+model Subject {
+  id             String                 @id @default(cuid())
+  code           String                 @unique
+  name           String
+  createdAt      DateTime               @default(now()) @map("created_at")
+  levelLinks     SubjectLevel[]
+  approvalScopes TeacherApprovalScope[]
+  classes        ClassOffering[]
+
+  @@map("subjects")
+}
+
+model SubjectLevel {
+  id               String         @id @default(cuid())
+  subjectId        String         @map("subject_id")
+  educationLevelId String         @map("education_level_id")
+  subject          Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  educationLevel   EducationLevel @relation(fields: [educationLevelId], references: [id], onDelete: Cascade)
+
+  @@unique([subjectId, educationLevelId])
+  @@map("subject_levels")
+}
+
+model TeacherApprovalScope {
+  id               String              @id @default(cuid())
+  teacherProfileId String              @map("teacher_profile_id")
+  subjectId        String              @map("subject_id")
+  educationLevelId String              @map("education_level_id")
+  status           ApprovalScopeStatus @default(ACTIVE)
+  approvedAt       DateTime?           @map("approved_at")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  teacherProfile   TeacherProfile      @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  subject          Subject             @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  educationLevel   EducationLevel      @relation(fields: [educationLevelId], references: [id], onDelete: Restrict)
+
+  @@unique([teacherProfileId, subjectId, educationLevelId])
+  @@index([status])
+  @@map("teacher_approval_scopes")
+}
+
+model ClassOffering {
+  id                    String              @id @default(cuid())
+  teacherProfileId      String              @map("teacher_profile_id")
+  subjectId             String              @map("subject_id")
+  educationLevelId      String              @map("education_level_id")
+  lifecycleState        ClassLifecycleState @default(DRAFT) @map("lifecycle_state")
+  capacity              Int?
+  currentPriceVersionId String?             @unique @map("current_price_version_id")
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+  teacherProfile        TeacherProfile      @relation(fields: [teacherProfileId], references: [id], onDelete: Restrict)
+  subject               Subject             @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  educationLevel        EducationLevel      @relation(fields: [educationLevelId], references: [id], onDelete: Restrict)
+  priceVersions         ClassPriceVersion[] @relation("ClassPriceVersions")
+  currentPriceVersion   ClassPriceVersion?  @relation("CurrentClassPrice", fields: [currentPriceVersionId], references: [id], onDelete: SetNull)
+  sessions              ClassSession[]
+  subscriptions         Subscription[]
+  enrollments           Enrollment[]
+
+  @@index([lifecycleState, subjectId, educationLevelId])
+  @@map("class_offerings")
+}
+
+model ClassPriceVersion {
+  id            String        @id @default(cuid())
+  classId       String        @map("class_id")
+  amountMinor   Int           @map("amount_minor")
+  currency      String        @default("MAD")
+  effectiveFrom DateTime      @map("effective_from")
+  effectiveTo   DateTime?     @map("effective_to")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  class         ClassOffering @relation("ClassPriceVersions", fields: [classId], references: [id], onDelete: Cascade)
+  currentFor    ClassOffering? @relation("CurrentClassPrice")
+  subscriptions Subscription[]
+
+  @@unique([id, classId])
+  @@index([classId, effectiveFrom])
+  @@map("class_price_versions")
+}
+
+model ClassSession {
+  id        String        @id @default(cuid())
+  classId   String        @map("class_id")
+  startsAt  DateTime      @map("starts_at")
+  endsAt    DateTime      @map("ends_at")
+  timezone  String        @default("Africa/Casablanca")
+  status    SessionStatus @default(SCHEDULED)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  class     ClassOffering @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([classId, startsAt])
+  @@map("class_sessions")
+}
+
+model StoredObject {
+  id               String             @id @default(cuid())
+  provider         String
+  storageKey       String             @map("storage_key")
+  originalFilename String             @map("original_filename")
+  mimeType         String             @map("mime_type")
+  sizeBytes        BigInt             @map("size_bytes")
+  checksum         String?
+  createdByUserId  String?            @map("created_by_user_id")
+  replacesObjectId String?            @unique @map("replaces_object_id")
+  status           StoredObjectStatus @default(ACTIVE)
+  retentionUntil   DateTime?          @map("retention_until")
+  deletedAt        DateTime?          @map("deleted_at")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  createdBy        UserAccount?       @relation("StoredObjectCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  replaces          StoredObject?      @relation("StoredObjectReplacement", fields: [replacesObjectId], references: [id], onDelete: SetNull)
+  replacedBy        StoredObject?      @relation("StoredObjectReplacement")
+  verificationDocs VerificationDocument[]
+
+  @@unique([provider, storageKey])
+  @@index([status, retentionUntil])
+  @@map("stored_objects")
+}
+
+model CommissionVersion {
+  id              String   @id @default(cuid())
+  label           String
+  basisPoints     Int      @map("basis_points")
+  effectiveFrom   DateTime @map("effective_from")
+  effectiveTo     DateTime? @map("effective_to")
+  createdAt       DateTime @default(now()) @map("created_at")
+  financialEvents FinancialEvent[]
+
+  @@index([effectiveFrom])
+  @@map("commission_versions")
+}
+
+model Subscription {
+  id                   String            @id @default(cuid())
+  payerUserId          String            @map("payer_user_id")
+  learnerUserId        String            @map("learner_user_id")
+  classId              String            @map("class_id")
+  priceVersionId       String            @map("price_version_id")
+  state                SubscriptionState @default(PENDING)
+  agreedAmountMinor    Int               @map("agreed_amount_minor")
+  currency             String            @default("MAD")
+  originalBillingDay   Int               @map("original_billing_day")
+  currentPeriodStartAt DateTime?          @map("current_period_start_at")
+  currentPeriodEndAt   DateTime?          @map("current_period_end_at")
+  cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  payer                UserAccount        @relation("SubscriptionPayer", fields: [payerUserId], references: [id], onDelete: Restrict)
+  learner              UserAccount        @relation("SubscriptionLearner", fields: [learnerUserId], references: [id], onDelete: Restrict)
+  class                ClassOffering      @relation(fields: [classId], references: [id], onDelete: Restrict)
+  priceVersion         ClassPriceVersion  @relation(fields: [priceVersionId], references: [id], onDelete: Restrict)
+  enrollment           Enrollment?
+  paymentAttempts      PaymentAttempt[]
+  financialEvents      FinancialEvent[]
+
+  @@unique([id, learnerUserId, classId])
+  @@index([payerUserId, classId, state])
+  @@index([learnerUserId, classId, state])
+  @@map("subscriptions")
+}
+
+model Enrollment {
+  id             String          @id @default(cuid())
+  subscriptionId String          @unique @map("subscription_id")
+  learnerUserId  String          @map("learner_user_id")
+  classId        String          @map("class_id")
+  state          EnrollmentState @default(PENDING)
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  subscription   Subscription    @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  learner        UserAccount      @relation("EnrollmentLearner", fields: [learnerUserId], references: [id], onDelete: Restrict)
+  class          ClassOffering    @relation(fields: [classId], references: [id], onDelete: Restrict)
+  entitlements   Entitlement[]
+
+  @@index([learnerUserId, classId, state])
+  @@map("enrollments")
+}
+
+model Entitlement {
+  id                   String           @id @default(cuid())
+  enrollmentId         String           @map("enrollment_id")
+  sourcePaymentEventId String?          @unique @map("source_payment_event_id")
+  startsAt             DateTime         @map("starts_at")
+  endsAt               DateTime         @map("ends_at")
+  state                EntitlementState @default(PENDING)
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+  enrollment           Enrollment       @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  sourcePaymentEvent   PaymentEvent?    @relation(fields: [sourcePaymentEventId], references: [id], onDelete: Restrict)
+
+  @@unique([enrollmentId, startsAt, endsAt])
+  @@index([enrollmentId, state, endsAt])
+  @@map("entitlements")
+}
+
+model PaymentAttempt {
+  id                String              @id @default(cuid())
+  subscriptionId    String              @map("subscription_id")
+  provider          String
+  providerAttemptId String?             @map("provider_attempt_id")
+  amountMinor       Int                 @map("amount_minor")
+  currency          String              @default("MAD")
+  state             PaymentAttemptState @default(CREATED)
+  idempotencyKey    String              @unique @map("idempotency_key")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  subscription      Subscription        @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  events            PaymentEvent[]
+  financialEvents   FinancialEvent[]
+
+  @@unique([provider, providerAttemptId])
+  @@index([subscriptionId, state])
+  @@map("payment_attempts")
+}
+
+model PaymentEvent {
+  id               String           @id @default(cuid())
+  paymentAttemptId String?          @map("payment_attempt_id")
+  provider         String
+  providerEventId  String           @map("provider_event_id")
+  normalizedType   String           @map("normalized_type")
+  payloadHash      String?          @map("payload_hash")
+  receivedAt       DateTime         @default(now()) @map("received_at")
+  paymentAttempt   PaymentAttempt?  @relation(fields: [paymentAttemptId], references: [id], onDelete: SetNull)
+  entitlements     Entitlement[]
+
+  @@unique([provider, providerEventId])
+  @@index([paymentAttemptId, receivedAt])
+  @@map("payment_events")
+}
+
+model FinancialEvent {
+  id                       String             @id @default(cuid())
+  subscriptionId           String?            @map("subscription_id")
+  paymentAttemptId         String?            @map("payment_attempt_id")
+  commissionVersionId      String?            @map("commission_version_id")
+  eventType                String             @map("event_type")
+  sourceType               String             @map("source_type")
+  sourceId                 String             @map("source_id")
+  grossMinor               Int                @map("gross_minor")
+  platformCommissionMinor  Int?               @map("platform_commission_minor")
+  teacherPayableMinor      Int?               @map("teacher_payable_minor")
+  currency                 String             @default("MAD")
+  createdAt                DateTime           @default(now()) @map("created_at")
+  subscription             Subscription?      @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  paymentAttempt           PaymentAttempt?    @relation(fields: [paymentAttemptId], references: [id], onDelete: Restrict)
+  commissionVersion        CommissionVersion? @relation(fields: [commissionVersionId], references: [id], onDelete: Restrict)
+  refunds                  RefundRecord[]
+  payouts                  PayoutRecord[]
+
+  @@unique([sourceType, sourceId, eventType])
+  @@index([subscriptionId, createdAt])
+  @@map("financial_events")
+}
+
+model RefundRecord {
+  id               String       @id @default(cuid())
+  financialEventId String       @map("financial_event_id")
+  amountMinor      Int          @map("amount_minor")
+  currency         String       @default("MAD")
+  state            RefundState  @default(REQUESTED)
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+  financialEvent   FinancialEvent @relation(fields: [financialEventId], references: [id], onDelete: Restrict)
+
+  @@index([financialEventId, state])
+  @@map("refund_records")
+}
+
+model PayoutRecord {
+  id               String      @id @default(cuid())
+  financialEventId String      @map("financial_event_id")
+  amountMinor      Int         @map("amount_minor")
+  currency         String      @default("MAD")
+  state            PayoutState @default(PENDING)
+  provider         String?
+  providerPayoutId String?     @map("provider_payout_id")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  financialEvent   FinancialEvent @relation(fields: [financialEventId], references: [id], onDelete: Restrict)
+
+  @@unique([provider, providerPayoutId])
+  @@index([financialEventId, state])
+  @@map("payout_records")
 }

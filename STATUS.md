@@ -4,15 +4,16 @@
 
 ## Current phase
 
-The product baseline (#1), AI harness (#17), and application architecture/foundation (#2) are merged on `main`.
+The product baseline (#1), AI harness (#17), application architecture/foundation (#2), harness cleanup (#21), and Issue #3 design preflight are merged on `main`.
 
-Current `main` foundation commit: `3473e7e625244e50b8c82ac40db45bfe5f669131`.
+Current `main` base for Issue #3 implementation: `43fbfd93fd35254adac3dc1f7fe5758aef47709e`.
 
-## Current coordination work
+## Active work
 
-- #21 — reconcile backlog with architecture and implementation guardrails.
-- The guardrails/context-loading cleanup is documentation/harness work only.
-- #3 business schema work has not started.
+- Issue: #3 — core entities, money records, subscription states, and provider-neutral stored-object metadata.
+- Implementation PR: #26 on `feat/issue-3-core-data-model`.
+- Founder decisions used: FD-02, FD-24, FD-25 Accepted; FD-09 post-failure recovery anchor remains deferred to #11.
+- Next action: human review of PR #26. Do not merge automatically.
 
 ## Architecture posture
 
@@ -26,4 +27,4 @@ Current `main` foundation commit: `3473e7e625244e50b8c82ac40db45bfe5f669131`.
 
 ## Next gate
 
-Complete and review the harness/guardrails cleanup, then run the mandatory design preflight for Issue #3 before any business migration is written.
+After PR #26 is reviewed and merged, Issue #3 can close and downstream schema consumers (#5/#6/#7/#9/#10/#11/#12/#13) may build on the merged contracts subject to their own founder-decision gates.

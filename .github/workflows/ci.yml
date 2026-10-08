@@ -49,8 +49,12 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Validate Prisma schema
+        run: pnpm exec prisma validate
       - name: Apply migrations
         run: pnpm db:migrate
+      - name: Seed synthetic data
+        run: pnpm db:seed
       - name: Lint
         run: pnpm lint
       - name: Typecheck
