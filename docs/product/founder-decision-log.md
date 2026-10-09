@@ -48,8 +48,8 @@ Issue #2 is merged and ADR 0003 is the canonical application architecture baseli
   - Adults can subscribe for themselves without creating a second account.
   - A learner and a payer can still be different people and must then be connected through an explicit application relationship.
   - Unique learner and unique payer metrics remain distinguishable even when the same account fulfills both roles.
-  - This decision does not set a legal age threshold or minor-contracting rule; FD-03 remains open.
-- Engineering blocked: No for #3 account shape. #5 still depends on FD-03 for minors.
+  - This decision does not set a legal age threshold or minor-contracting rule; FD-03 now governs that boundary.
+- Engineering blocked: No. FD-02 and the accepted FD-03 position together define the Issue #5 relationship/minor posture without inventing an age.
 
 ## FD-03. Minors and guardian onboarding
 
