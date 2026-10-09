@@ -37,7 +37,7 @@ Source-backed backlog constraints:
 | Administrator | The two founders are the initial support and review team. They approve teachers, handle suspensions, and approve exceptional refunds. |
 | Payer / guardian | Checkout shows the payer and the learner. Unique payers and unique learners are tracked separately. Access is not granted because an email address or a surname matches. |
 
-Product gap. Whether one person may be both learner and payer, and how minors are onboarded, is [FD-02](founder-decision-log.md) and [FD-03](founder-decision-log.md). There is no source-backed recommendation. Schema and registration must not hard-code a household model. FD-03 has a proposed MVP position in the decision log. Ali has not accepted it.
+Product gap. Whether one person may be both learner and payer, and how minors are onboarded, is [FD-02](founder-decision-log.md) and [FD-03](founder-decision-log.md). There is no source-backed recommendation. Schema and registration must not hard-code a household model. FD-03 is Accepted: no hard-coded age for the MVP, explicit guardian relationships only, and age-specific enforcement deferred until legal/product review.
 
 ## Launch marketplace scope
 
@@ -193,7 +193,7 @@ Source-backed constraints:
 - A guardian or payer relationship is an explicit link. Matching contact details do not create it.
 - The account that pays sees the price, the renewal date, and the cancellation term before checkout.
 
-Product gaps. The account model and the minor gate are [FD-02](founder-decision-log.md) and [FD-03](founder-decision-log.md). No age is stated. The proposed FD-03 position is: do not hard-code an age, keep explicit guardian relationships, and do not infer guardianship. That position is not Accepted.
+Product gaps. The account model and the minor gate are [FD-02](founder-decision-log.md) and [FD-03](founder-decision-log.md). No age is stated. FD-03 is Accepted: do not hard-code an age, keep explicit guardian relationships, and do not infer guardianship.
 
 Source-backed account security:
 
@@ -201,9 +201,9 @@ Source-backed account security:
 - Sensitive account changes are logged without secrets.
 - Sessions can be revoked. That is session control, not a device-management console.
 
-Source conflict. Student two-factor authentication is [FD-10](founder-decision-log.md). The fuller handoff requires it for students. The lean business plan recommends risk-based student verification instead. The proposed MVP position, not Accepted, is optional learner MFA and mandatory teacher/administrator MFA for privileged access. Ali must explicitly approve it.
+Source conflict. Student two-factor authentication is [FD-10](founder-decision-log.md). The fuller handoff requires it for students. The lean business plan recommends risk-based student verification instead. FD-10 is Accepted: learner MFA is optional for the MVP, while teacher/administrator privileged access requires MFA.
 
-Source conflict. Device and session restrictions are [FD-11](founder-decision-log.md). The full product direction includes restriction concepts. The lean plan recommends deferring a full device-management console. The proposed MVP position, not Accepted, is no numeric device cap, with session listing and revocation only. Ali must explicitly approve it.
+Source conflict. Device and session restrictions are [FD-11](founder-decision-log.md). The full product direction includes restriction concepts. The lean plan recommends deferring a full device-management console. FD-11 is Accepted: no numeric device cap for the MVP, with session listing and revocation only.
 
 ## Scheduling rules
 
@@ -333,15 +333,15 @@ The full statements are in [the founder decision log](founder-decision-log.md). 
 | ID | Topic | Classification | Blocks |
 | --- | --- | --- | --- |
 | FD-02 | Learner and payer/guardian | Product gap | #3, #5 |
-| FD-03 | Minors and guardian onboarding | Product gap; proposed position not Accepted | #5 |
+| FD-03 | Minors and guardian onboarding | Accepted | None for #5 |
 | FD-04 | Class stop versus new enrolment | Product gap | #7, #11 |
 | FD-05 | Reactivation and charge consent | Product gap | #11 |
 | FD-06 | Switching and credits | No invented credits; switch flow is a gap | #11 |
 | FD-07 | Schedule changes and dissent | Product gap | #7, #12 |
 | FD-08 | Holidays and billing | Product gap | #7, #11 |
 | FD-09 | Failed-payment grace | Source-backed rules; recovery anchor is a gap | Anchor blocks #11 |
-| FD-10 | Student second factor | Source conflict; proposed position not Accepted | #5 |
-| FD-11 | Device and session restrictions | Source conflict; proposed position not Accepted | #5, for a restriction or a console |
+| FD-10 | Student second factor | Accepted | None for #5 |
+| FD-11 | Device and session restrictions | Accepted | None for #5 MVP |
 | FD-12 | Recordings in the pilot | Source-backed direction; consent still needs approval | Storing recordings blocks #7 and #12 |
 | FD-13 | Recording retention | Source-backed 90-day proposal | #12, if recordings are stored |
 | FD-14 | Late enrolment | Source-backed rule | None, after baseline acceptance |
