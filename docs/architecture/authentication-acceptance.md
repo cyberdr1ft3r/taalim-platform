@@ -22,9 +22,9 @@ Automated tests cover those rules with synthetic database rows and mocked Clerk 
 
 | ID | Proposed MVP position | Status |
 | --- | --- | --- |
-| FD-03 | Do not hard-code an age. Keep explicit guardian relationships. Defer age enforcement until legal and product review. Do not infer guardianship. | Proposed. Ali must explicitly approve. Not Accepted. |
-| FD-10 | Learner MFA optional. Teacher and administrator privileged access requires MFA. Later step-up stays possible and is not specified here. | Proposed. Ali must explicitly approve. Not Accepted. |
-| FD-11 | No numeric device cap. Session listing and remote revocation only. No device console. Later suspicious-session controls need evidence. | Proposed. Ali must explicitly approve. Not Accepted. |
+| FD-03 | Do not hard-code an age. Keep explicit guardian relationships. Defer age enforcement until legal and product review. Do not infer guardianship. | **Accepted by Ali on 2026-10-09.** |
+| FD-10 | Learner MFA optional. Teacher and administrator privileged access requires MFA. Later step-up stays possible and is not specified here. | **Accepted by Ali on 2026-10-09.** |
+| FD-11 | No numeric device cap. Session listing and remote revocation only. No device console. Later suspicious-session controls need evidence. | **Accepted by Ali on 2026-10-09.** |
 
 ## Clerk instance tested
 
@@ -64,7 +64,7 @@ These were not performed. Names match the Clerk Dashboard as documented for the 
 2. Copy that instance's publishable key and secret key into the local gitignored `.env` only. Do not commit them and do not paste them into GitHub. The example files stay placeholders.
 3. Confirm the publishable key decodes to a host ending in `accounts.dev`, and that the host is not `example.clerk.accounts.dev`. Rebuild and restart the app. The home page is prerendered, so the Account Portal links follow the publishable key present at `pnpm build`.
 4. **Account Portal → Overview.** Read the displayed sign-in, sign-up, and user URLs. They must be on that same host.
-5. **Account Portal → Redirects.** Set the sign-in and sign-up fallback redirects to `http://127.0.0.1:3000`, which is `APP_BASE_URL`. Add `http://localhost:3000` as well if the browser uses localhost. Development host detection also records the browser origin, and `redirect_url` must match that origin.
+5. **Account Portal → Redirects.** Use one canonical development origin for this acceptance run: `http://127.0.0.1:3000`. Set `APP_BASE_URL` and the browser URL to that same origin, and set the sign-in/sign-up fallback redirects to it. Do not mix `localhost` and `127.0.0.1` while the generated links carry an explicit `redirect_url`.
 6. **Paths.** Leave the application sign-in and sign-up paths unset. Do not point them at `/sign-in` or `/sign-up` on the Taalim app. Those routes do not exist. Embedded components are not the chosen surface.
 7. **User & authentication → Email.** Enable email address. Enable email verification by code.
 8. **User & authentication → Password.** Enable password so the hosted sign-in page offers forgot-password. Leave social providers off. Issue #5 defers social login.
@@ -149,7 +149,7 @@ Public home links to the configured Account Portal host are an additional AUTOMA
 
 ## Unresolved external gates
 
-- Ali has not explicitly approved FD-03, FD-10, or FD-11.
+- FD-03, FD-10, and FD-11 are Accepted. They no longer block Issue #5.
 - No Clerk development instance, allowed origins, MFA strategies, or synthetic users were configured from this environment.
 - Live registration, verification, sign-in, sign-out, recovery, and authenticator enrollment were not run.
 - In-process rate limiting remains single-process, as already documented. That does not by itself keep #5 open once the items above are done.
@@ -161,7 +161,6 @@ No.
 
 Closing it requires all of the following:
 
-1. Ali explicitly accepts the FD-03, FD-10, and FD-11 proposals, or records a different decision.
-2. The dashboard steps above are done on a development instance, with secrets kept out of Git.
-3. Scenarios 1–3, 9–11, and the live halves of 4, 12, 13, 20–23 are run with synthetic `+clerk_test` users and recorded as MANUAL PASS or as a failure with evidence.
-4. The server MFA policy stays fail-closed. Do not weaken it to obtain a pass.
+1. The dashboard steps above are done on a development instance, with secrets kept out of Git.
+2. Scenarios 1–3, 9–11, and the live halves of 4, 12, 13, 20–23 are run with synthetic `+clerk_test` users and recorded as MANUAL PASS or as a failure with evidence.
+3. The server MFA policy stays fail-closed. Do not weaken it to obtain a pass.
