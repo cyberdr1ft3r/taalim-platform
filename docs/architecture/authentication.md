@@ -19,11 +19,12 @@ Possession of an email address, surname, object ID, storage key, URL, bucket pat
 
 ## Authentication flows
 
-Registration, contact verification, sign-in, and password recovery are Clerk-hosted flows. They are tenant/dashboard configuration:
+Registration, contact verification, sign-in, and password recovery are Clerk Account Portal flows. They are tenant/dashboard configuration plus direct links from the public home page. The acceptance record is [authentication-acceptance.md](authentication-acceptance.md).
 
-- The Clerk development instance, configured redirect URLs, and password-reset options are dashboard state, not repository state.
-- This repository intentionally does not mount the Clerk browser SDK yet (ADR 0003): with placeholder keys the hosted widgets cannot render, so this repository cannot exercise them end to end. The flows are configuration-complete on the Clerk side and verified by CI configuration, not by in-repo UI.
-- Sign-out combines the Clerk client sign-out with server-side session revocation (`DELETE /api/auth/sessions/[sessionId]`, including the current session).
+- The public home page links to `https://<frontend-api>/sign-in`, `/sign-up`, and `/user`, with `redirect_url` set to `APP_BASE_URL`. The frontend API host is decoded from `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`. Password recovery is the forgot-password step on the hosted sign-in page. MFA enrollment and hosted sign-out are on `/user`.
+- The checked-in placeholder key decodes to `example.clerk.accounts.dev`. That host is not a Taalim development tenant. A real development instance replaces the local keys and changes those links. No Clerk secret is stored in Git.
+- This repository does not mount `ClerkProvider` or embed `<SignIn>` / `<SignUp>` (ADR 0003). With the placeholder key, the browser SDK replaces the document with `host_invalid`. `auth.protect()` on non-public pages redirects to the Account Portal when a real key is present and no application sign-in path is configured.
+- Server-side session revocation remains `DELETE /api/auth/sessions/[sessionId]`. Hosted sign-out on `/user` ends the browser session. The API revoke is what proves ownership.
 
 The proxy (`src/proxy.ts`) treats `/`, `/api/health`, `/ar`, and `/fr` as public. Every other page requires a session via `auth.protect()`. Every other `/api/*` route returns JSON `401 {"error":"authentication_required"}` instead of a redirect. Route handlers still re-enforce authorization internally; the proxy check is a first line, not the authorization decision.
 
@@ -53,7 +54,7 @@ Errors map to documented statuses through `authorizationErrorResponse()`: `401` 
 
 - Teacher/admin privileged operations require this evidence server-side.
 - Enforcing MFA enrollment is Clerk tenant configuration (dashboard multi-factor requirement); repository code cannot enroll users and does not claim to.
-- **FD-10 (student second factor) is open.** Learner access is not made 2FA-dependent here; the risk-based/full-handoff conflict is a founder decision.
+- **FD-10 is proposed, not Accepted.** Learner access is not 2FA-dependent. Teacher and administrator privileged operations require a second factor. Ali must explicitly approve that position. Do not enable Clerk's instance-wide "Require multi-factor authentication" while the proposal stands, because that toggle would force learners.
 
 ## Guardian/payer relationships (FD-02)
 
@@ -65,7 +66,7 @@ Lifecycle in `src/server/relationships/service.ts`, exposed under `/api/relation
 2. Only the learner-side account accepts → `ACTIVE`. The transition is a single conditional database write guarded on `status = PENDING`, so a revoke that lands between the ownership check and the write cannot be overwritten by a stale accept.
 3. Either party revokes → `REVOKED` (terminal for that row). Revocation is also a conditional transition; an accept racing a revoke can never leave the relationship `ACTIVE` when both operations were requested.
 
-All checks are server-side against database rows. Self-relationships and targets without the `LEARNER` role are rejected. Only `GUARDIAN` and `GUARDIAN_AND_PAYER` relationships authorize acting for the learner; a `PAYER`-only relationship never does. **FD-03 (minors) is open**: who creates and accepts on behalf of a minor, and any age threshold, are not invented here.
+All checks are server-side against database rows. Self-relationships and targets without the `LEARNER` role are rejected. Only `GUARDIAN` and `GUARDIAN_AND_PAYER` relationships authorize acting for the learner; a `PAYER`-only relationship never does. **FD-03 is proposed, not Accepted.** The proposal is: no hard-coded age, explicit guardian relationships only, and no inferred guardianship. Ali must explicitly approve it. No age threshold is implemented.
 
 ## Private object access
 
@@ -84,7 +85,7 @@ Storage provider credentials stay server-side; browsers receive content or short
 
 - `GET /api/auth/sessions` lists the caller's own active Clerk sessions (queried with the caller's subject only). Requires an authenticated Clerk session but not a Taalim account row: session lifecycle belongs to the identity layer, and a valid session without a provisioned account can still inspect and revoke its own sessions.
 - `DELETE /api/auth/sessions/[sessionId]` verifies `session.userId === caller subject` server-side before revoking. A guessed or leaked session ID cannot revoke another user's session. Audit records carry the Clerk subject always and the account ID only when one exists.
-- **FD-11 (device/session caps) is open**: no numeric device cap is invented; session listing and revocation are implemented, full device management is not.
+- **FD-11 is proposed, not Accepted.** The proposal is no numeric device cap, with session listing and revocation only. Ali must explicitly approve it. No device cap is implemented.
 
 ## Rate limiting
 
