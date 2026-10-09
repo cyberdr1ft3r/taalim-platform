@@ -11,8 +11,9 @@ Current `main` for the Issue #5 acceptance follow-up: `ed52cefac0224ebc6f7431311
 ## Active work
 
 - Issue: #5 remains open. The authorization implementation is merged. This follow-up does not rewrite it.
-- Still open: Ali's explicit approval of the proposed FD-03, FD-10, and FD-11 positions; Clerk development-instance dashboard configuration; the real-instance acceptance run in `docs/architecture/authentication-acceptance.md`.
-- Next action: Ali approves or rejects those three proposals, then configures the Clerk development instance and runs the acceptance scenarios. Do not close #5 automatically.
+- FD-03, FD-10, and FD-11 are Accepted as of 2026-10-09.
+- Still open: Clerk development-instance dashboard configuration and the real-instance acceptance run in `docs/architecture/authentication-acceptance.md`.
+- Next action: configure the Clerk development instance and run the acceptance scenarios. Do not close #5 automatically.
 
 ## Architecture posture
 
@@ -26,4 +27,4 @@ Current `main` for the Issue #5 acceptance follow-up: `ed52cefac0224ebc6f7431311
 
 ## Next gate
 
-Issue #5 cannot close until Ali explicitly accepts or rejects the proposed FD-03, FD-10, and FD-11 positions, a real Clerk development instance is configured, and the acceptance scenarios in `docs/architecture/authentication-acceptance.md` are run on that instance. In-process rate limiting still assumes a single web process. Account-suspension semantics beyond Clerk-side suspension still wait on schema and product decisions.
+Issue #5 product decisions are resolved. Issue #5 cannot close until a real Clerk development instance is configured and the acceptance scenarios in `docs/architecture/authentication-acceptance.md` are run on that instance. In-process rate limiting still assumes a single web process. Account-suspension semantics beyond Clerk-side suspension still wait on schema and product decisions.
