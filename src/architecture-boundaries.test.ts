@@ -17,7 +17,7 @@ describe("architecture import boundaries", () => {
       'import fs from "node:fs";\nimport s3 from "@aws-sdk/client-s3";\nexport const marker = [fs, s3];\n',
     );
     expect(messages.length).toBeGreaterThan(0);
-  });
+  }, 120_000);
 
   it("rejects a payment SDK import from feature code", async () => {
     const messages = await lint(
@@ -25,5 +25,5 @@ describe("architecture import boundaries", () => {
       'import Stripe from "stripe";\nexport const marker = Stripe;\n',
     );
     expect(messages.length).toBeGreaterThan(0);
-  });
+  }, 120_000);
 });

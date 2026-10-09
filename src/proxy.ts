@@ -6,13 +6,24 @@ import { routing } from "@/i18n/routing";
 const handleI18n = createIntlMiddleware(routing);
 
 const isPublicRoute = createRouteMatcher(["/", "/api/health", "/ar", "/fr"]);
+const isApiRoute = createRouteMatcher(["/api/(.*)"]);
 
 /**
  * Clerk confirms there is a session. It does not decide class, file,
  * payment, or admin access. Those checks belong in server-side Taalim code.
+ *
+ * Unauthenticated API requests receive a JSON 401 instead of a page
+ * redirect; business authorization still runs inside each route handler.
  */
 const handleClerk = clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
+  if (isPublicRoute(request)) {
+    // Public surface: no session required.
+  } else if (isApiRoute(request)) {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "authentication_required" }, { status: 401 });
+    }
+  } else {
     await auth.protect();
   }
   if (request.nextUrl.pathname.startsWith("/api")) return;
