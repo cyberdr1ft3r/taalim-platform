@@ -38,16 +38,18 @@ Guards (`src/server/authorization/guards.ts`):
 
 Policies (`src/server/authorization/policies/`):
 
-- `relationships.ts` — acting for a learner requires an explicit `ACTIVE` `GuardianLearnerRelationship`.
-- `class-resource.ts` — class-scoped data requires the owning teacher (second factor), an `ACTIVE` enrollment with a time-bounded `ACTIVE` entitlement (learner), or an `ACTIVE` guardian relationship to an entitled learner. Administrators require a second factor.
-- `teacher-verification.ts` — verification cases are reachable only by the owning teacher (matched through `TeacherProfile.userId`) or an administrator, and both paths require a second factor.
-- `stored-object-access.ts` — resolves object plus business relationship in the database first, then calls `authorizeStoredObjectRead`, and only then the storage provider (see below).
+- `relationships.ts` — acting for a learner requires an explicit `ACTIVE` `GuardianLearnerRelationship` of a guardian-capable type (`GUARDIAN` or `GUARDIAN_AND_PAYER`). A `PAYER`-only relationship funds education but never authorizes acting for the learner. Administrator oversight requires the `ADMIN` role plus a second factor; self-management requires neither.
+- `class-resource.ts` — class-scoped data requires the owning teacher (current `TEACHER` role plus second factor), an `ACTIVE` enrollment with a time-bounded `ACTIVE` entitlement (learner), or an `ACTIVE` guardian-capable relationship (`GUARDIAN`/`GUARDIAN_AND_PAYER`) to an entitled learner. Administrators require the `ADMIN` role plus a second factor. A `PAYER`-only relationship does not grant class-resource access.
+- `teacher-verification.ts` — verification cases are reachable only by the owning teacher (matched through `TeacherProfile.userId` and holding the current `TEACHER` role) or an `ADMIN`-role administrator, and both paths require a second factor. Removing the `TEACHER` role while the profile remains does not keep authorizing the account.
+- `stored-object-access.ts` — resolves object plus business relationship in the database first, then calls `authorizeStoredObjectRead`, and only then the storage provider (see below). Objects governed by a sensitive feature policy (currently `VerificationDocument`) are decided exclusively by that policy; the generic creator path never applies to them.
 
 Errors map to documented statuses through `authorizationErrorResponse()`: `401` authentication required, `403` missing account / policy denial / missing second factor, `429` rate limited, generic `500` for anything unexpected.
 
 ## Second factor
 
-`sessionHasSecondFactor()` reads Clerk session evidence (`amr` second-factor methods such as `totp`, `otp`, `backup_code`, `passkey`, falling back to the `fva` tuple) and fails closed when no recognizable evidence exists.
+`sessionHasSecondFactor()` trusts exactly one source: Clerk's documented `fva` (factor verification age) claim on v2 session tokens, surfaced on the auth object as `factorVerificationAge: [firstFactorAge, secondFactorAge]`. A non-negative second-factor age proves a second factor was verified within the session; `-1` proves it was never verified. When no `fva` evidence is present, the session is single-factor (fail closed).
+
+`amr` (authentication method references) is deliberately not consulted: it is not a documented default v2 claim, and Clerk treats passkeys as a passwordless first-factor authentication method, not a second-factor strategy. No `amr` entry (including `passkey` or `totp`) can override an explicit `fva` second-factor absence.
 
 - Teacher/admin privileged operations require this evidence server-side.
 - Enforcing MFA enrollment is Clerk tenant configuration (dashboard multi-factor requirement); repository code cannot enroll users and does not claim to.
@@ -60,18 +62,19 @@ FD-02 is Accepted: explicit guardian/payer relationships, and one account may be
 Lifecycle in `src/server/relationships/service.ts`, exposed under `/api/relationships`:
 
 1. A `PAYER`-role account invites an explicit learner account → `PENDING` (idempotent for existing open triples; a `REVOKED` triple may be re-invited).
-2. Only the learner-side account accepts → `ACTIVE`.
-3. Either party revokes → `REVOKED` (terminal for that row).
+2. Only the learner-side account accepts → `ACTIVE`. The transition is a single conditional database write guarded on `status = PENDING`, so a revoke that lands between the ownership check and the write cannot be overwritten by a stale accept.
+3. Either party revokes → `REVOKED` (terminal for that row). Revocation is also a conditional transition; an accept racing a revoke can never leave the relationship `ACTIVE` when both operations were requested.
 
-All checks are server-side against database rows. Self-relationships and targets without the `LEARNER` role are rejected. **FD-03 (minors) is open**: who creates and accepts on behalf of a minor, and any age threshold, are not invented here.
+All checks are server-side against database rows. Self-relationships and targets without the `LEARNER` role are rejected. Only `GUARDIAN` and `GUARDIAN_AND_PAYER` relationships authorize acting for the learner; a `PAYER`-only relationship never does. **FD-03 (minors) is open**: who creates and accepts on behalf of a minor, and any age threshold, are not invented here.
 
 ## Private object access
 
 `resolveStoredObjectAccess()` → `authorizeStoredObjectRead()` → storage provider, in that order:
 
 1. Load `StoredObject` by ID; require `ACTIVE` status.
-2. Resolve the relationship: creator, owning teacher of the verification case containing the object (second factor required), or administrator (second factor required). Class-resource object links arrive with later issues (#7/#12).
-3. Deny returns `404 not_found` so object existence cannot be probed. Denied decisions never invoke the provider, so no bytes and no temporary link can be produced.
+2. If the object is linked to a sensitive feature (currently `VerificationDocument`), that feature policy decides exclusively: owning teacher (current `TEACHER` role plus second factor) or `ADMIN`-role administrator (second factor). The generic creator path never applies, so a teacher who is also `createdByUserId` still cannot bypass the verification 2FA policy through single-factor creator access.
+3. Otherwise, resolve the relationship: creator, or administrator (current `ADMIN` role plus second factor). Class-resource object links arrive with later issues (#7/#12).
+4. Deny returns `404 not_found` so object existence cannot be probed. Denied decisions never invoke the provider, so no bytes and no temporary link can be produced.
 
 Routes: `GET /api/objects/[objectId]/content` (streamed with `cache-control: private, no-store`) and `POST /api/objects/[objectId]/temporary-access` (TTL clamped to 60–3600 seconds, rate limited).
 
@@ -79,8 +82,8 @@ Storage provider credentials stay server-side; browsers receive content or short
 
 ## Session management
 
-- `GET /api/auth/sessions` lists the caller's own active Clerk sessions (queried with the caller's subject only).
-- `DELETE /api/auth/sessions/[sessionId]` verifies `session.userId === caller subject` server-side before revoking. A guessed or leaked session ID cannot revoke another user's session.
+- `GET /api/auth/sessions` lists the caller's own active Clerk sessions (queried with the caller's subject only). Requires an authenticated Clerk session but not a Taalim account row: session lifecycle belongs to the identity layer, and a valid session without a provisioned account can still inspect and revoke its own sessions.
+- `DELETE /api/auth/sessions/[sessionId]` verifies `session.userId === caller subject` server-side before revoking. A guessed or leaked session ID cannot revoke another user's session. Audit records carry the Clerk subject always and the account ID only when one exists.
 - **FD-11 (device/session caps) is open**: no numeric device cap is invented; session listing and revocation are implemented, full device management is not.
 
 ## Rate limiting
@@ -113,6 +116,6 @@ If a first-party account suspension state is added later, it must gate `resolveC
 
 ## Verification evidence
 
-- Unit: second-factor evidence, rate limiting, error mapping, identity states, provisioning role restrictions, guard escalation, session ownership.
-- Integration (`TAALIM_RUN_DB_TESTS=1`): concurrent provisioning, relationship lifecycle with cross-user negatives, class-resource entitlement and 2FA requirements, verification-document ownership, storage-provider spy proving denied access never reaches the provider.
+- Unit: second-factor evidence (`fva` canonical, fail closed), rate limiting, error mapping, identity states, provisioning role restrictions, guard escalation, session ownership (including sessions without a Taalim account).
+- Integration (`TAALIM_RUN_DB_TESTS=1`): concurrent provisioning, relationship lifecycle with cross-user negatives and the accept-vs-revoke race, class-resource entitlement plus guardian-type and 2FA/TEACHER-role requirements, verification-document ownership (including the creator-bypass regression and role-removal regression), storage-provider spy proving denied access never reaches the provider.
 - All checks: `prisma validate`, migrations on a clean database, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, Playwright e2e, `scripts/check-harness.mjs`.

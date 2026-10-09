@@ -83,4 +83,54 @@ describe("session management", () => {
 
     expect(sessionsApi.revokeSession).toHaveBeenCalledWith("sess_other_device");
   });
+
+  it("lets a session with no Taalim account list and revoke its own sessions", async () => {
+    const unprovisioned: TaalimUser = {
+      clerkSubject: "user_owner",
+      sessionId: "sess_current",
+      secondFactorVerified: false,
+      account: null,
+    };
+    sessionsApi.getSessionList.mockResolvedValue({
+      data: [
+        {
+          id: "sess_current",
+          status: "active",
+          createdAt: 1,
+          lastActiveAt: 2,
+          expireAt: 3,
+          userId: "user_owner",
+        },
+      ],
+    });
+    sessionsApi.getSession.mockResolvedValue({
+      id: "sess_current",
+      userId: "user_owner",
+    });
+    sessionsApi.revokeSession.mockResolvedValue({ id: "sess_current" });
+
+    const sessions = await listOwnSessions(unprovisioned);
+    expect(sessions).toHaveLength(1);
+
+    await revokeOwnSession(unprovisioned, "sess_current");
+    expect(sessionsApi.revokeSession).toHaveBeenCalledWith("sess_current");
+  });
+
+  it("still refuses cross-user revocation for an unprovisioned session", async () => {
+    const unprovisioned: TaalimUser = {
+      clerkSubject: "user_owner",
+      sessionId: "sess_current",
+      secondFactorVerified: false,
+      account: null,
+    };
+    sessionsApi.getSession.mockResolvedValue({
+      id: "sess_victim",
+      userId: "user_victim",
+    });
+
+    await expect(revokeOwnSession(unprovisioned, "sess_victim")).rejects.toBeInstanceOf(
+      AuthorizationDeniedError,
+    );
+    expect(sessionsApi.revokeSession).not.toHaveBeenCalled();
+  });
 });

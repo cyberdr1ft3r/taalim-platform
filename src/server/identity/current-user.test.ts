@@ -76,7 +76,7 @@ describe("resolveCurrentUser", () => {
     setSession({
       userId: "user_x",
       sessionId: "sess_1",
-      sessionClaims: { amr: [{ method: "password" }, { method: "totp" }] },
+      sessionClaims: { fva: [100, 50] },
     });
     prismaMock.userAccount.findUnique.mockResolvedValue({
       id: "acct_1",

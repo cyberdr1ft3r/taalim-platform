@@ -15,10 +15,7 @@ import { logSecurityEvent } from "../audit";
 
 export { StorageAccessDeniedError };
 
-type StoredObjectDb = Pick<
-  PrismaClient,
-  "storedObject" | "teacherProfile" | "teacherVerificationCase"
->;
+type StoredObjectDb = Pick<PrismaClient, "storedObject" | "teacherVerificationCase">;
 
 export type StoredObjectDenyReason =
   | "unauthenticated"
@@ -40,10 +37,17 @@ export interface StoredObjectAccessDecision {
  * storage key is not consulted as authorization: only the resolved
  * relationship is.
  *
- * Relationship sources supported by the Issue #3 schema:
+ * Objects governed by a sensitive feature policy (currently
+ * VerificationDocument) are resolved first and only by that policy: the
+ * owning teacher (current TEACHER role, second-factor session) or an
+ * administrator (current ADMIN role, second-factor session). The generic
+ * creator path never applies to feature-governed objects, so a teacher who
+ * happens to be `createdByUserId` still cannot read verification documents
+ * through single-factor creator access.
+ *
+ * For objects not governed by a feature policy, the supported relationship
+ * sources are:
  * - the creator of the object;
- * - the teacher who owns the verification case containing the object
- *   (privileged: requires a second-factor session);
  * - an administrator (privileged: requires a second-factor session).
  *
  * Class-resource object links arrive with later issues (#7/#12); this policy
@@ -71,26 +75,33 @@ export async function resolveStoredObjectAccess(
   if (!object) return deny("object_not_found");
   if (object.status !== "ACTIVE") return deny("object_not_active");
 
-  let relationshipGranted = false;
+  const roles = user.account.roles;
 
-  if (object.createdByUserId === user.account.id) {
-    relationshipGranted = true;
-  } else if (user.secondFactorVerified) {
-    if (user.account.roles.includes("ADMIN")) {
-      relationshipGranted = true;
-    } else if (user.account.roles.includes("TEACHER")) {
-      const ownedCase = await db.teacherVerificationCase.findFirst({
-        where: {
-          documents: { some: { storedObjectId: objectId } },
-          teacherProfile: { userId: user.account.id },
-        },
-        select: { id: true },
-      });
-      relationshipGranted = ownedCase !== null;
+  // Feature-governed objects: the feature policy decides exclusively. No
+  // creator or possession fallback exists for these objects.
+  const verificationCase = await db.teacherVerificationCase.findFirst({
+    where: { documents: { some: { storedObjectId: objectId } } },
+    select: { teacherProfile: { select: { userId: true } } },
+  });
+  if (verificationCase) {
+    if (!user.secondFactorVerified) return deny("relationship_not_granted");
+    if (roles.includes("ADMIN")) {
+      // privileged admin oversight
+    } else if (
+      roles.includes("TEACHER") &&
+      verificationCase.teacherProfile.userId === user.account.id
+    ) {
+      // owning teacher
+    } else {
+      return deny("relationship_not_granted");
     }
+  } else if (object.createdByUserId === user.account.id) {
+    // generic creator path, non-feature-governed objects only
+  } else if (!user.secondFactorVerified || !roles.includes("ADMIN")) {
+    return deny("relationship_not_granted");
   }
 
-  const relationship: StoredObjectRelationship = { allowed: relationshipGranted };
+  const relationship: StoredObjectRelationship = { allowed: true };
   const decision = authorizeStoredObjectRead({
     principalId: user.account.id,
     key: object.storageKey,

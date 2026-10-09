@@ -7,12 +7,16 @@ type ClassResourceDb = Pick<PrismaClient, "classOffering" | "enrollment" | "guar
 /**
  * Server-side decision for class-scoped business data (sessions, rosters,
  * class-level records). Entitlement is time-bounded and comes from the Issue
- * #3 Enrollment/Entitlement model; a payer/guardian reaches it only through an
- * explicit ACTIVE relationship to an entitled learner.
+ * #3 Enrollment/Entitlement model; a guardian reaches it only through an
+ * explicit ACTIVE guardian-capable relationship (`GUARDIAN` or
+ * `GUARDIAN_AND_PAYER`) to an entitled learner. A `PAYER`-only relationship
+ * is not a privacy/education-data grant.
  *
- * Teacher and administrator paths additionally require that the session
- * completed a second factor. Learner access does not (FD-10 remains open;
- * this policy does not make learner 2FA mandatory).
+ * Teacher and administrator paths additionally require the Taalim-owned
+ * role AND a completed second factor. Removing the TEACHER role while the
+ * profile remains does not keep authorizing the account. Learner access does
+ * not require 2FA (FD-10 remains open; this policy does not make learner 2FA
+ * mandatory).
  */
 export async function canAccessClassResource(
   db: ClassResourceDb,
@@ -33,7 +37,7 @@ export async function canAccessClassResource(
     select: { teacherProfile: { select: { userId: true } } },
   });
   if (!classOffering) return false;
-  if (classOffering.teacherProfile.userId === accountId) {
+  if (roles.includes("TEACHER") && classOffering.teacherProfile.userId === accountId) {
     return user.secondFactorVerified;
   }
 
@@ -58,6 +62,7 @@ export async function canAccessClassResource(
       guardianPayerUserId: accountId,
       learnerUserId: { in: entitledLearnerIds },
       status: "ACTIVE",
+      relationshipType: { in: ["GUARDIAN", "GUARDIAN_AND_PAYER"] },
     },
     select: { id: true },
   });

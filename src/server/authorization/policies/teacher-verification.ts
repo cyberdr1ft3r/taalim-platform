@@ -6,9 +6,11 @@ type TeacherVerificationDb = Pick<PrismaClient, "teacherProfile" | "teacherVerif
 
 /**
  * Teacher verification documents are sensitive. Only the owning teacher
- * (matched through TeacherProfile.userId, not email) or an ADMIN may access a
- * verification case, and both privileged paths require a second-factor
- * session. Possession of a case ID grants nothing.
+ * (matched through TeacherProfile.userId, not email, and holding the current
+ * Taalim-owned TEACHER role) or an ADMIN may access a verification case, and
+ * both privileged paths require a second-factor session. Removing the
+ * TEACHER role while the profile remains does not keep authorizing the
+ * account. Possession of a case ID grants nothing.
  */
 export async function canAccessTeacherVerification(
   db: TeacherVerificationDb,
@@ -20,6 +22,7 @@ export async function canAccessTeacherVerification(
   const roles = user.account.roles;
 
   if (roles.includes("ADMIN")) return true;
+  if (!roles.includes("TEACHER")) return false;
 
   const verificationCase = await db.teacherVerificationCase.findUnique({
     where: { id: verificationCaseId },

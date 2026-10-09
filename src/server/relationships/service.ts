@@ -136,8 +136,11 @@ export async function createRelationshipInvite(
 }
 
 /**
- * Only the learner-side account may accept an invite, and only while it is
- * PENDING. Accepting never flips ACTIVE or REVOKED rows.
+ * Only the learner-side account may accept an invite. The PENDING -> ACTIVE
+ * transition is a single conditional database update guarded on the current
+ * status, so a revoke that lands between the ownership check and the write
+ * cannot be overwritten by a stale accept: the conditional update matches
+ * zero rows and the invite is reported as no longer acceptable.
  */
 export async function acceptRelationshipInvite(
   db: RelationshipDb,
@@ -150,10 +153,19 @@ export async function acceptRelationshipInvite(
   if (relationship.learnerUserId !== actorId) deny();
   if (relationship.status !== "PENDING") deny();
 
-  const updated = await db.guardianLearnerRelationship.update({
-    where: { id: relationshipId },
+  const result = await db.guardianLearnerRelationship.updateMany({
+    where: { id: relationshipId, status: "PENDING" },
     data: { status: "ACTIVE" },
   });
+  if (result.count === 0) {
+    // A concurrent revoke (or another accept) won the race; re-read and
+    // report the authoritative state instead of resurrecting the invite.
+    const raced = await db.guardianLearnerRelationship.findUnique({
+      where: { id: relationshipId },
+    });
+    if (raced) return toSummary(raced);
+    deny();
+  }
   logSecurityEvent({
     type: "relationship.invite_accepted",
     result: "allowed",
@@ -161,10 +173,15 @@ export async function acceptRelationshipInvite(
     actorClerkSubject: actor.clerkSubject,
     targetId: relationshipId,
   });
+  const updated = await loadRelationship(db, relationshipId);
   return toSummary(updated);
 }
 
-/** Either party may revoke. Revocation is terminal for the row's use. */
+/**
+ * Either party may revoke. Revocation is terminal for the row's use and is
+ * also a conditional transition, so an accept racing a revoke can never
+ * leave the relationship ACTIVE when both operations were requested.
+ */
 export async function revokeRelationship(
   db: RelationshipDb,
   actor: TaalimUser,
@@ -176,10 +193,17 @@ export async function revokeRelationship(
   if (relationship.guardianPayerUserId !== actorId && relationship.learnerUserId !== actorId) deny();
   if (relationship.status === "REVOKED") return toSummary(relationship);
 
-  const updated = await db.guardianLearnerRelationship.update({
-    where: { id: relationshipId },
+  const result = await db.guardianLearnerRelationship.updateMany({
+    where: { id: relationshipId, status: { in: ["PENDING", "ACTIVE"] } },
     data: { status: "REVOKED" },
   });
+  if (result.count === 0) {
+    const raced = await db.guardianLearnerRelationship.findUnique({
+      where: { id: relationshipId },
+    });
+    if (raced) return toSummary(raced);
+    deny();
+  }
   logSecurityEvent({
     type: "relationship.revoked",
     result: "allowed",
@@ -188,6 +212,7 @@ export async function revokeRelationship(
     targetId: relationshipId,
     detail: { previousStatus: relationship.status },
   });
+  const updated = await loadRelationship(db, relationshipId);
   return toSummary(updated);
 }
 

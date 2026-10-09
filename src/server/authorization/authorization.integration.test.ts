@@ -162,7 +162,9 @@ describe.skipIf(!enabled)("issue 5 authorization", () => {
         originalFilename: "synthetic-verification.pdf",
         mimeType: "application/pdf",
         sizeBytes: BigInt(4096),
-        createdByUserId: null,
+        // In the real upload flow the owning teacher is also the creator;
+        // the feature policy must still decide access on its own.
+        createdByUserId: teacher.id,
       },
     });
     const learnerOwnedObject = await client.storedObject.create({
@@ -351,7 +353,7 @@ describe.skipIf(!enabled)("issue 5 authorization", () => {
     ).rejects.toBeInstanceOf(AuthorizationDeniedError);
   });
 
-  it("restricts class resources to entitled learners, active guardians, and 2FA staff", async () => {
+  it("restricts class resources to entitled learners, guardian-capable relationships, and 2FA staff", async () => {
     const fixture = await createFixture();
     const client = db();
     await enrollLearnerWithEntitlement(fixture.learner.id, fixture);
@@ -374,18 +376,30 @@ describe.skipIf(!enabled)("issue 5 authorization", () => {
     const payerUser = userFor(fixture.payer, [UserRole.PAYER]);
     expect(await canAccessClassResource(client, payerUser, fixture.classId)).toBe(false);
 
-    const relationship = await client.guardianLearnerRelationship.create({
+    const payerOnly = await client.guardianLearnerRelationship.create({
       data: {
         guardianPayerUserId: fixture.payer.id,
         learnerUserId: fixture.learner.id,
-        relationshipType: "GUARDIAN_AND_PAYER",
+        relationshipType: "PAYER",
         status: "ACTIVE",
       },
+    });
+    expect(await canAccessClassResource(client, payerUser, fixture.classId)).toBe(false);
+
+    await client.guardianLearnerRelationship.update({
+      where: { id: payerOnly.id },
+      data: { relationshipType: "GUARDIAN" },
     });
     expect(await canAccessClassResource(client, payerUser, fixture.classId)).toBe(true);
 
     await client.guardianLearnerRelationship.update({
-      where: { id: relationship.id },
+      where: { id: payerOnly.id },
+      data: { relationshipType: "GUARDIAN_AND_PAYER" },
+    });
+    expect(await canAccessClassResource(client, payerUser, fixture.classId)).toBe(true);
+
+    await client.guardianLearnerRelationship.update({
+      where: { id: payerOnly.id },
       data: { status: "REVOKED" },
     });
     expect(await canAccessClassResource(client, payerUser, fixture.classId)).toBe(false);
@@ -514,5 +528,164 @@ describe.skipIf(!enabled)("issue 5 authorization", () => {
     expect(ownRead.mimeType).toBe("application/pdf");
     expect(provider.get).toHaveBeenCalledTimes(2);
     expect(provider.get).toHaveBeenLastCalledWith("so_0123456789abcdef0123456789abcd11");
+  });
+
+  it("denies verification-document creator access without a second factor", async () => {
+    const fixture = await createFixture();
+    const client = db();
+    const provider = createSpyProvider();
+
+    // The teacher is also createdByUserId; the generic creator path must not
+    // bypass the verification-document 2FA policy.
+    const creatorSingle = userFor(fixture.teacher, [UserRole.TEACHER], false);
+    await expect(
+      readStoredObjectForUser(client, provider, creatorSingle, fixture.verificationObjectId),
+    ).rejects.toBeInstanceOf(StorageAccessDeniedError);
+    expect(provider.get).not.toHaveBeenCalled();
+
+    await expect(
+      createTemporaryAccessForUser(
+        client,
+        provider,
+        creatorSingle,
+        fixture.verificationObjectId,
+        300,
+      ),
+    ).rejects.toBeInstanceOf(StorageAccessDeniedError);
+    expect(provider.createTemporaryAccess).not.toHaveBeenCalled();
+
+    // A single-factor administrator is also denied on feature-governed objects.
+    const adminSingle = userFor(fixture.admin, [UserRole.ADMIN], false);
+    await expect(
+      readStoredObjectForUser(client, provider, adminSingle, fixture.verificationObjectId),
+    ).rejects.toBeInstanceOf(StorageAccessDeniedError);
+    expect(provider.get).not.toHaveBeenCalled();
+  });
+
+  it("denies teacher-privileged access after the TEACHER role is removed", async () => {
+    const fixture = await createFixture();
+    const client = db();
+    const provider = createSpyProvider();
+
+    await client.roleAssignment.deleteMany({
+      where: { userId: fixture.teacher.id, role: UserRole.TEACHER },
+    });
+    const formerTeacher: TaalimUser = {
+      clerkSubject: fixture.teacher.clerkSubject,
+      sessionId: "sess_former",
+      secondFactorVerified: true,
+      account: { id: fixture.teacher.id, clerkSubject: fixture.teacher.clerkSubject, roles: [] },
+    };
+
+    expect(await canAccessClassResource(client, formerTeacher, fixture.classId)).toBe(false);
+    expect(
+      await canAccessTeacherVerification(client, formerTeacher, fixture.verificationCaseId),
+    ).toBe(false);
+    await expect(
+      readStoredObjectForUser(client, provider, formerTeacher, fixture.verificationObjectId),
+    ).rejects.toBeInstanceOf(StorageAccessDeniedError);
+    expect(provider.get).not.toHaveBeenCalled();
+    await expect(
+      createTemporaryAccessForUser(client, provider, formerTeacher, fixture.verificationObjectId, 300),
+    ).rejects.toBeInstanceOf(StorageAccessDeniedError);
+    expect(provider.createTemporaryAccess).not.toHaveBeenCalled();
+  });
+
+  it("requires a second factor for administrator learner management", async () => {
+    const fixture = await createFixture();
+    const client = db();
+
+    const adminSingle = userFor(fixture.admin, [UserRole.ADMIN], false);
+    const adminMfa = userFor(fixture.admin, [UserRole.ADMIN], true);
+    expect(await canManageLearner(client, adminSingle, fixture.learner.id)).toBe(false);
+    expect(await canManageLearner(client, adminMfa, fixture.learner.id)).toBe(true);
+    // Self-management needs neither a role nor a second factor.
+    expect(await canManageLearner(client, adminSingle, fixture.admin.id)).toBe(true);
+  });
+
+  it("grants learner management only to guardian-capable ACTIVE relationships", async () => {
+    const fixture = await createFixture();
+    const client = db();
+    const payerUser = userFor(fixture.payer, [UserRole.PAYER]);
+
+    const payerOnly = await client.guardianLearnerRelationship.create({
+      data: {
+        guardianPayerUserId: fixture.payer.id,
+        learnerUserId: fixture.learner.id,
+        relationshipType: "PAYER",
+        status: "ACTIVE",
+      },
+    });
+    expect(await canManageLearner(client, payerUser, fixture.learner.id)).toBe(false);
+
+    await client.guardianLearnerRelationship.update({
+      where: { id: payerOnly.id },
+      data: { relationshipType: "GUARDIAN" },
+    });
+    expect(await canManageLearner(client, payerUser, fixture.learner.id)).toBe(true);
+
+    await client.guardianLearnerRelationship.update({
+      where: { id: payerOnly.id },
+      data: { relationshipType: "GUARDIAN_AND_PAYER" },
+    });
+    expect(await canManageLearner(client, payerUser, fixture.learner.id)).toBe(true);
+  });
+
+  it("does not let a stale accept overwrite a concurrent revoke", async () => {
+    const fixture = await createFixture();
+    const client = db();
+    const payerUser = userFor(fixture.payer, [UserRole.PAYER]);
+    const learnerUser = userFor(fixture.learner, [UserRole.LEARNER]);
+
+    const invite = await createRelationshipInvite(client, payerUser, {
+      learnerAccountId: fixture.learner.id,
+      relationshipType: "GUARDIAN_AND_PAYER",
+    });
+
+    // Simulate the exact race: the accept has loaded the PENDING row, the
+    // revoke then lands in the real database, and only afterwards does the
+    // accept's conditional write execute. The accept must not resurrect the
+    // relationship.
+    const relationshipDelegate = client.guardianLearnerRelationship;
+    let revokeInFlight: Promise<unknown> | null = null;
+    const racingDb = {
+      guardianLearnerRelationship: {
+        findUnique: (args: Parameters<typeof relationshipDelegate.findUnique>[0]) =>
+          relationshipDelegate.findUnique(args),
+        findFirst: (args: Parameters<typeof relationshipDelegate.findFirst>[0]) =>
+          relationshipDelegate.findFirst(args),
+        updateMany: async (args: Parameters<typeof relationshipDelegate.updateMany>[0]) => {
+          if (!revokeInFlight) {
+            revokeInFlight = revokeRelationship(client, payerUser, invite.id);
+          }
+          await revokeInFlight;
+          return relationshipDelegate.updateMany(args);
+        },
+      },
+      userAccount: client.userAccount,
+      roleAssignment: client.roleAssignment,
+    };
+
+    const accepted = await acceptRelationshipInvite(
+      racingDb as unknown as Parameters<typeof acceptRelationshipInvite>[0],
+      learnerUser,
+      invite.id,
+    );
+    expect(accepted.status).toBe("REVOKED");
+
+    const row = await client.guardianLearnerRelationship.findUnique({
+      where: { id: invite.id },
+    });
+    expect(row?.status).toBe("REVOKED");
+    expect(await canManageLearner(client, payerUser, fixture.learner.id)).toBe(false);
+
+    // The original (non-intercepted) accept path also refuses the revoked row.
+    await expect(
+      acceptRelationshipInvite(client, learnerUser, invite.id),
+    ).rejects.toBeInstanceOf(AuthorizationDeniedError);
+    const after = await client.guardianLearnerRelationship.findUnique({
+      where: { id: invite.id },
+    });
+    expect(after?.status).toBe("REVOKED");
   });
 });

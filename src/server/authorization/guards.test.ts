@@ -84,7 +84,7 @@ describe("guards", () => {
     );
 
     setSession(
-      { sessionClaims: { amr: [{ method: "password" }, { method: "totp" }] } },
+      { sessionClaims: { fva: [100, 50] } },
       { id: "acct_1", clerkSubject: "user_x", roles: [UserRole.TEACHER] },
     );
     await expect(requirePrivilegedUser([UserRole.TEACHER])).resolves.toMatchObject({
