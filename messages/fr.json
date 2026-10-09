@@ -12,6 +12,9 @@
     "formLabel": "Note d'essai",
     "formSubmit": "Vérifier le formulaire",
     "formSuccess": "La note d'essai est acceptée",
-    "formError": "Saisissez une note d'essai"
+    "formError": "Saisissez une note d'essai",
+    "signIn": "Se connecter",
+    "signUp": "Créer un compte",
+    "account": "Compte"
   }
 }

@@ -41,6 +41,28 @@ test("private object routes answer before any object handling", async ({ request
   expect(temporary.status()).toBe(401);
 });
 
+test("public home links to the Clerk Account Portal encoded by the publishable key", async ({ page }) => {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+  const appBaseUrl = process.env.APP_BASE_URL ?? "http://127.0.0.1:3000";
+  const host = Buffer.from(publishableKey.replace(/^pk_(?:test|live)_/, ""), "base64")
+    .toString("utf8")
+    .replace(/\$$/, "");
+  const redirect = encodeURIComponent(new URL(appBaseUrl).toString());
+  await page.goto("/fr");
+  await expect(page.getByRole("link", { name: "Se connecter" })).toHaveAttribute(
+    "href",
+    `https://${host}/sign-in?redirect_url=${redirect}`,
+  );
+  await expect(page.getByRole("link", { name: "Créer un compte" })).toHaveAttribute(
+    "href",
+    `https://${host}/sign-up?redirect_url=${redirect}`,
+  );
+  await expect(page.getByRole("link", { name: "Compte", exact: true })).toHaveAttribute(
+    "href",
+    `https://${host}/user?redirect_url=${redirect}`,
+  );
+});
+
 test("health and public routes remain reachable without a session", async ({ request }) => {
   const health = await request.get("/api/health");
   expect(health.ok()).toBeTruthy();

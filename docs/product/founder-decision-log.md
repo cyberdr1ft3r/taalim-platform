@@ -1,6 +1,8 @@
 # Founder decision log
 
-Issue #1 established the original decision log. Accepted entries currently include FD-01, FD-02, FD-24, and FD-25. All other entries retain the classification stated in their own section.
+Issue #1 established the original decision log. Accepted entries currently include FD-01, FD-02, FD-03, FD-10, FD-11, FD-24, and FD-25. All other entries retain the classification stated in their own section.
+
+On 2026-10-09, Ali explicitly approved the previously proposed MVP positions for FD-03, FD-10, and FD-11. Those three entries are now Accepted.
 
 [ADR 0001](../adr/0001-mvp-subscription-and-supply-rules.md) and [ADR 0002](../adr/0002-paid-access-and-private-content.md) stay Proposed. Accepting FD-01 does not accept those records.
 
@@ -16,7 +18,7 @@ Those files are still not in the GitHub repository. This log does not claim they
 
 | Classification | Meaning |
 | --- | --- |
-| Accepted | The founder has approved this entry. FD-01 is the only Accepted entry. |
+| Accepted | The founder has approved this entry. Current Accepted entries include FD-01, FD-02, FD-03, FD-10, FD-11, FD-24, and FD-25. |
 | Source-backed rule | The reviewed sources or the backlog state the rule. It is not an open design choice. It is still not Accepted until the founder accepts that rule. |
 | Source-backed recommendation | A source proposes it. Founder approval is still required before engineering treats it as the rule. |
 | Genuine source conflict | The sources disagree. The founder must choose. This log does not choose. |
@@ -46,23 +48,30 @@ Issue #2 is merged and ADR 0003 is the canonical application architecture baseli
   - Adults can subscribe for themselves without creating a second account.
   - A learner and a payer can still be different people and must then be connected through an explicit application relationship.
   - Unique learner and unique payer metrics remain distinguishable even when the same account fulfills both roles.
-  - This decision does not set a legal age threshold or minor-contracting rule; FD-03 remains open.
-- Engineering blocked: No for #3 account shape. #5 still depends on FD-03 for minors.
+  - This decision does not set a legal age threshold or minor-contracting rule; FD-03 now governs that boundary.
+- Engineering blocked: No. FD-02 and the accepted FD-03 position together define the Issue #5 relationship/minor posture without inventing an age.
 
 ## FD-03. Minors and guardian onboarding
 
-- Classification: Product gap.
+- Classification: Accepted.
+- Accepted on: 2026-10-09 by Ali.
 - Source: The backlog requires a guardian relationship. No reviewed finding states an age threshold, who creates the learner account, or who may accept paid terms. This log does not invent an age.
 - Options:
   - A. Any learner account may subscribe. The product does not ask about age.
   - B. Below an age the founder sets with legal review, the guardian creates or links the learner, accepts the terms, and is the payer. That learner cannot independently contract.
   - C. Every learner requires a guardian, at every age.
-- Recommendation: none. Do not invent the age in engineering.
+- Accepted MVP position:
+  - Do not hard-code a Moroccan legal-age threshold in application code yet.
+  - Keep explicit guardian relationships. FD-02 already requires that link when the learner and the payer are different people.
+  - Leave any age or minor-specific enforcement configurable and deferred until legal and product review establishes the rule.
+  - Do not infer guardianship from an email address, a surname, or a shared household.
+- Accepted option: the position above. It deliberately does not choose an age.
 - Consequences:
   - A. Fastest onboarding. Minor contracting stays unresolved in the product.
   - B. Families can pay for children, and adults can pay for themselves, once the founder and counsel name the age.
   - C. Adult students must onboard a second person before they can pay.
-- Engineering blocked without a decision: No for #2. Yes for #5.
+  - The proposal lets launch proceed without an invented age, while the explicit relationship from FD-02 remains the only guardian path.
+- Engineering blocked without a decision: No for #2 or #5 on this decision. The merged Issue #5 authorization code does not encode an age and does not infer guardianship. Any future age gate remains deferred until legal and product review names the rule.
 
 ## FD-04. Stopping a class versus stopping renewal
 
@@ -162,7 +171,8 @@ Issue #2 is merged and ADR 0003 is the canonical application architecture baseli
 
 ## FD-10. Student authentication factors
 
-- Classification: Genuine source conflict requiring founder choice.
+- Classification: Accepted.
+- Accepted on: 2026-10-09 by Ali.
 - Source tension:
   - The fuller handoff requires two-factor authentication for Student, Teacher, and Admin.
   - The lean business plan recommends risk-based student verification, while Teacher and Admin two-factor authentication stays mandatory.
@@ -170,15 +180,21 @@ Issue #2 is merged and ADR 0003 is the canonical application architecture baseli
 - Options:
   - A. Follow the fuller handoff. Students must use a second factor, as teachers and administrators do.
   - B. Follow the lean business plan. Student verification is risk-based. Do not require a second factor for every student. Teachers and administrators still must use a second factor.
-- Recommendation: none. This log does not choose between A and B.
+- Accepted MVP position:
+  - Learners: a second factor is optional for the MVP.
+  - The architecture stays ready for a later risk-based or step-up check. This proposal does not define a risk score.
+  - Teachers and administrators: a second factor stays mandatory for privileged access. Both sources already agree on that part.
+  - This follows option B for learners and does not adopt option A.
+- Accepted option: follow option B for learners. Teacher and administrator privileged access still requires a second factor.
 - Consequences:
   - A. One authentication policy for every role. Younger students need a recovery path that does not weaken the guardian link.
-  - B. Less setup for students. The meaning of "risk-based" still has to be specified by the founder before #5 builds it, without inventing a risk score here.
-- Engineering blocked without a decision: No for #2. Yes for student authentication in #5. Teacher and administrator two-factor authentication can follow the shared source rule after the baseline is accepted.
+  - B. Less setup for students. The meaning of "risk-based" still has to be specified before any later step-up rule is built. This proposal does not invent that score.
+- Engineering blocked without a decision: No for #2 or #5 on this decision. The merged Issue #5 code matches the accepted rule: teacher and administrator privileged operations require a second factor; learner access does not require one globally. Instance-wide Clerk "Require multi-factor authentication" must stay off because that toggle would force every learner.
 
 ## FD-11. Device and session restrictions
 
-- Classification: Genuine source conflict requiring founder choice.
+- Classification: Accepted.
+- Accepted on: 2026-10-09 by Ali.
 - Source tension:
   - The full product direction includes device and session restriction concepts.
   - The lean business plan recommends deferring a full device-management console.
@@ -189,12 +205,18 @@ Issue #2 is merged and ADR 0003 is the canonical application architecture baseli
   - A. Enforce a device or session restriction at launch, and defer the full device-management console. The founder must name the restriction. This log does not name one.
   - B. Defer both the restriction and the console. Keep session revocation from Issue #5.
   - C. Build a full device-management console at launch.
-- Recommendation: none. Do not treat "no cap" as the rule. Social login is a separate unset release cut in Issue #5. This entry does not decide it.
+- Accepted MVP position:
+  - No fixed numeric device cap. Do not invent a limit such as two devices.
+  - Keep session listing and remote revocation of the caller's own sessions.
+  - Do not build a device-management console for the MVP.
+  - Suspicious-session or device controls may be added later from evidence. This proposal does not define them.
+  - This follows option B. Social login stays a separate unset release cut. This entry does not decide it.
+- Accepted option: follow option B for the MVP. This does not turn "no cap" into a permanent product rule.
 - Consequences:
   - A. The product direction's restriction concept is honored. The console can wait. #5 cannot implement the restriction until the founder names it.
   - B. Shared devices keep working. The full product direction's restriction concept is postponed, not deleted.
   - C. Adds a management UI the lean plan says to defer.
-- Engineering blocked without a decision: No for #2. Yes for #5 if it would enforce a device restriction or build a device console. Session revocation itself is not waiting on this choice.
+- Engineering blocked without a decision: No for #2 or #5 on this decision. The merged Issue #5 code lists and revokes the caller's own sessions and does not enforce a device cap. A numeric cap or a device console stays unimplemented for the MVP.
 
 ## FD-12. Recordings in the paid pilot
 
@@ -434,15 +456,15 @@ Issue #2 is merged and ADR 0003 is the canonical application architecture baseli
 | --- | --- | --- |
 | FD-01 | Accepted. Arabic and French at launch. English architecture-ready and deferred. | No |
 | FD-02 | Accepted. One account may be both learner and payer; explicit relationship when different people are involved. | No |
-| FD-03 | Product gap | No |
+| FD-03 | Accepted. No hard-coded age; explicit guardian relationships; age enforcement deferred pending legal/product review | No |
 | FD-04 | Product gap | No |
 | FD-05 | Product gap | No |
 | FD-06 | Source-backed constraint against invented credits, plus a product gap for any switch flow | No |
 | FD-07 | Product gap | No |
 | FD-08 | Product gap | No |
 | FD-09 | Source-backed grace rules; anchor after recovery remains a product gap | No |
-| FD-10 | Genuine source conflict | No |
-| FD-11 | Genuine source conflict | No |
+| FD-10 | Accepted. Learner MFA optional; teacher/admin privileged access requires MFA | No |
+| FD-11 | Accepted. No numeric device cap; session listing/revocation only for MVP | No |
 | FD-12 | Source-backed direction; consent and retention still need approval | No |
 | FD-13 | Source-backed recommendation requiring founder approval | No |
 | FD-14 | Source-backed rule | No |
@@ -488,7 +510,7 @@ ADR 0001 and ADR 0002 stay Proposed until a separate founder approval. Their Pro
 | --- | --- | --- |
 | #3 | No remaining founder decision blocks the neutral schema. FD-09 recovery anchor is explicitly deferred to #11. | Ready for schema design/implementation after review |
 | #4, #16 | FD-21 seller model, written provider confirmation, legal and accounting review | Legal/provider gate. Live charges stay off. |
-| #5 | FD-03 minors, FD-10 student second factor, FD-11 device restriction versus console | Product gap or source conflict. FD-02 is accepted. Session revocation and teacher/admin second factor are not waiting on a new choice. |
+| #5 | FD-03, FD-10, and FD-11 are Accepted. Clerk development-instance configuration and the real-instance acceptance run are still open. | Product decisions resolved. FD-02/03/10/11 are accepted. |
 | #6 | FD-18 curriculum list, FD-22 document lifetime, FD-23 public sentence | Product gap |
 | #7 | FD-04 who may enrol after stop-renewal, FD-07 schedule changes, FD-12 before any recording is stored, FD-17 previews, FD-18 | Product gap, or approval before storing recordings |
 | #8 | FD-16 review timing, FD-17 previews, FD-19 commission disclosure, FD-23 public sentence | Product gap or unapproved commercial proposal |
@@ -501,7 +523,6 @@ ADR 0001 and ADR 0002 stay Proposed until a separate founder approval. Their Pro
 
 ## Suggested review order for later issues
 
-1. FD-10 and FD-11, before #5 builds student authentication or any device restriction.
-2. FD-03 before #5 implements minor onboarding. FD-02 is now Accepted for the account relationship shape.
-3. Remaining money gaps before checkout copy and settlement: FD-15, FD-19, FD-20, FD-21, and the FD-09 recovery anchor. FD-24 and FD-25 are now Accepted.
+1. FD-03, FD-10, and FD-11 are resolved for Issue #5. The merged authorization code matches those accepted positions.
+2. Remaining money gaps before checkout copy and settlement: FD-15, FD-19, FD-20, FD-21, and the FD-09 recovery anchor. FD-24 and FD-25 are now Accepted.
 4. Content and catalogue gaps when those issues start: FD-04, FD-05, FD-06, FD-07, FD-08, FD-12, FD-13, FD-16, FD-17, FD-18, FD-22, FD-23, FD-26.

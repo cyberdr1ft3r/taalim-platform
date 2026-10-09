@@ -12,6 +12,9 @@
     "formLabel": "Synthetic note",
     "formSubmit": "Check the form",
     "formSuccess": "The synthetic note was accepted",
-    "formError": "Enter a synthetic note"
+    "formError": "Enter a synthetic note",
+    "signIn": "Sign in",
+    "signUp": "Create an account",
+    "account": "Account"
   }
 }

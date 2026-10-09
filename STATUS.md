@@ -1,19 +1,19 @@
 # STATUS.md
 
-> Snapshot: 2026-10-08. GitHub is authoritative for live issue/PR/review/merge state.
+> Snapshot: 2026-10-09. GitHub is authoritative for live issue/PR/review/merge state.
 
 ## Current phase
 
-The product baseline (#1), AI harness (#17), application architecture/foundation (#2), harness cleanup (#21), Issue #3 core data model, and Issue #4 payment-provider preflight/contract are merged on `main`.
+The product baseline (#1), AI harness (#17), application architecture/foundation (#2), harness cleanup (#21), Issue #3 core data model, Issue #4 payment-provider preflight/contract, and the Issue #5 authorization implementation are merged on `main`.
 
-Current `main` base for Issue #5 implementation: `023aec9ea619c53d19ae31ce41ca87acd363ceec`.
+Current `main` for the Issue #5 acceptance follow-up: `ed52cefac0224ebc6f7431311932825c7e248d3a`.
 
 ## Active work
 
-- Issue: #5 — authentication, guardian/payer relationships, and server-side authorization.
-- Branch: `feat/issue-5-auth-authorization`, delivered as a draft PR.
-- Founder decisions still open: FD-03 minors, FD-10 student second factor, FD-11 device/session restrictions.
-- Next action: human review of the draft PR, plus Clerk dashboard configuration for MFA enrollment. Do not merge automatically.
+- Issue: #5 remains open. The authorization implementation is merged. This follow-up does not rewrite it.
+- FD-03, FD-10, and FD-11 are Accepted as of 2026-10-09.
+- Still open: Clerk development-instance dashboard configuration and the real-instance acceptance run in `docs/architecture/authentication-acceptance.md`.
+- Next action: configure the Clerk development instance and run the acceptance scenarios. Do not close #5 automatically.
 
 ## Architecture posture
 
@@ -27,4 +27,4 @@ Current `main` base for Issue #5 implementation: `023aec9ea619c53d19ae31ce41ca87
 
 ## Next gate
 
-Review of the Issue #5 draft PR. Unresolved beside FD-03/FD-10/FD-11: Clerk tenant MFA enrollment is dashboard state, in-process rate limiting assumes a single web process, and account-suspension semantics beyond Clerk-side suspension wait on schema/product decisions.
+Issue #5 product decisions are resolved. Issue #5 cannot close until a real Clerk development instance is configured and the acceptance scenarios in `docs/architecture/authentication-acceptance.md` are run on that instance. In-process rate limiting still assumes a single web process. Account-suspension semantics beyond Clerk-side suspension still wait on schema and product decisions.
